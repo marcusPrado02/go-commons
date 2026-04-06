@@ -1,0 +1,21 @@
+linters:
+  enable:
+    - errcheck
+    - staticcheck
+    - revive
+    - govet
+    - gosimple
+    - unused
+    - misspell
+
+linters-settings:
+  revive:
+    rules:
+      - name: exported
+        arguments: ["checkPrivateReceivers", "sayRepetitiveInsteadOfStutters"]
+
+issues:
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - errcheck
