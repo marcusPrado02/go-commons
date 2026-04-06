@@ -1,0 +1,90 @@
+// Package result provides a generic Result[T] type for functional pipelines.
+// Port interfaces use (T, error) — Result[T] is an opt-in utility for
+// cases where chaining transformations is more expressive than sequential if-err checks.
+package result
+
+import (
+	kerrors "github.com/marcusPrado02/go-commons/kernel/errors"
+)
+
+// Result represents a computation that either succeeded with a value or failed with a Problem.
+type Result[T any] struct {
+	value   T
+	problem *kerrors.Problem
+}
+
+// Ok creates a successful Result holding the given value.
+func Ok[T any](value T) Result[T] {
+	return Result[T]{value: value}
+}
+
+// Fail creates a failed Result holding the given Problem.
+func Fail[T any](problem kerrors.Problem) Result[T] {
+	return Result[T]{problem: &problem}
+}
+
+// FromError bridges idiomatic Go (T, error) into Result[T].
+// If err is nil, returns Ok(value). If err is a Problem, wraps it directly.
+// Otherwise wraps it in ErrTechnical.
+func FromError[T any](value T, err error) Result[T] {
+	if err == nil {
+		return Ok(value)
+	}
+	if prob, ok := err.(kerrors.Problem); ok {
+		return Fail[T](prob)
+	}
+	return Fail[T](kerrors.ErrTechnical.WithCause(err))
+}
+
+// IsOk returns true if the Result holds a value.
+func (r Result[T]) IsOk() bool { return r.problem == nil }
+
+// IsFail returns true if the Result holds a Problem.
+func (r Result[T]) IsFail() bool { return r.problem != nil }
+
+// Value returns the held value. Panics if IsFail() — only call when IsOk() is guaranteed.
+func (r Result[T]) Value() T {
+	if r.IsFail() {
+		panic("result: called Value() on a failed Result — check IsOk() first")
+	}
+	return r.value
+}
+
+// ValueOrZero returns the held value, or the zero value of T if IsFail().
+func (r Result[T]) ValueOrZero() T { return r.value }
+
+// Problem returns the held Problem. Panics if IsOk() — only call when IsFail() is guaranteed.
+func (r Result[T]) Problem() kerrors.Problem {
+	if r.IsOk() {
+		panic("result: called Problem() on a successful Result — check IsFail() first")
+	}
+	return *r.problem
+}
+
+// Unwrap returns (value, nil) on success or (zero, problem) on failure.
+// Use this when integrating with code that expects idiomatic (T, error).
+func (r Result[T]) Unwrap() (T, error) {
+	if r.IsFail() {
+		var zero T
+		return zero, *r.problem
+	}
+	return r.value, nil
+}
+
+// Map transforms a successful Result[T] into Result[U] by applying f.
+// If r is failed, the failure propagates unchanged.
+func Map[T, U any](r Result[T], f func(T) U) Result[U] {
+	if r.IsFail() {
+		return Fail[U](r.Problem())
+	}
+	return Ok(f(r.value))
+}
+
+// FlatMap chains a successful Result[T] with a function returning Result[U].
+// If r is failed, the failure propagates unchanged and f is never called.
+func FlatMap[T, U any](r Result[T], f func(T) Result[U]) Result[U] {
+	if r.IsFail() {
+		return Fail[U](r.Problem())
+	}
+	return f(r.value)
+}
