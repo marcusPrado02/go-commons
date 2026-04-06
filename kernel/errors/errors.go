@@ -2,7 +2,10 @@
 // It defines Problem, DomainError, and pre-defined sentinel errors.
 package errors
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
 
 // ErrorCode identifies a specific domain error condition.
 type ErrorCode string
@@ -10,7 +13,7 @@ type ErrorCode string
 // NewErrorCode validates and creates an ErrorCode.
 func NewErrorCode(code string) (ErrorCode, error) {
 	if code == "" {
-		return "", fmt.Errorf("error code cannot be empty")
+		return "", errors.New("error code cannot be empty")
 	}
 	return ErrorCode(code), nil
 }
@@ -102,7 +105,9 @@ func (p Problem) WithCause(err error) Problem {
 }
 
 // DomainError is the interface implemented by errors returned from ports.
-// Adapters wrap SDK errors into DomainError before returning.
+// Adapters wrap SDK errors into DomainError before returning them.
+// No type in this package implements DomainError — Problem is a concrete value
+// type; adapters define their own DomainError implementations.
 type DomainError interface {
 	error
 	Code() ErrorCode

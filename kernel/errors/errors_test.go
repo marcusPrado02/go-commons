@@ -37,8 +37,16 @@ func TestProblem_WithDetail(t *testing.T) {
 	p := errors.NewProblem("CODE", errors.CategoryValidation, errors.SeverityWarning, "msg")
 	p2 := p.WithDetail("field", "email")
 
+	// original is unchanged
 	assert.Empty(t, p.Details)
+	// copy has the detail
 	assert.Equal(t, "email", p2.Details["field"])
+
+	// chaining: p2 already has a detail — covers the non-empty map branch
+	p3 := p2.WithDetail("count", 3)
+	assert.Equal(t, "email", p3.Details["field"])
+	assert.Equal(t, 3, p3.Details["count"])
+	assert.NotContains(t, p2.Details, "count") // p2 unchanged
 }
 
 func TestProblem_WithDetails_merges(t *testing.T) {
@@ -57,8 +65,8 @@ func TestProblem_ImplementsError(t *testing.T) {
 }
 
 func TestSentinelErrors_defined(t *testing.T) {
-	assert.NotEmpty(t, errors.ErrNotFound.Code)
-	assert.NotEmpty(t, errors.ErrUnauthorized.Code)
-	assert.NotEmpty(t, errors.ErrValidation.Code)
-	assert.NotEmpty(t, errors.ErrTechnical.Code)
+	assert.Equal(t, errors.ErrorCode("NOT_FOUND"), errors.ErrNotFound.Code)
+	assert.Equal(t, errors.ErrorCode("UNAUTHORIZED"), errors.ErrUnauthorized.Code)
+	assert.Equal(t, errors.ErrorCode("VALIDATION"), errors.ErrValidation.Code)
+	assert.Equal(t, errors.ErrorCode("TECHNICAL"), errors.ErrTechnical.Code)
 }
