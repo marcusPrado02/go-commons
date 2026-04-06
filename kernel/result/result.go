@@ -4,6 +4,8 @@
 package result
 
 import (
+	stderrors "errors"
+
 	kerrors "github.com/marcusPrado02/go-commons/kernel/errors"
 )
 
@@ -30,7 +32,8 @@ func FromError[T any](value T, err error) Result[T] {
 	if err == nil {
 		return Ok(value)
 	}
-	if prob, ok := err.(kerrors.Problem); ok {
+	var prob kerrors.Problem
+	if stderrors.As(err, &prob) {
 		return Fail[T](prob)
 	}
 	return Fail[T](kerrors.ErrTechnical.WithCause(err))
