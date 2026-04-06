@@ -1,5 +1,16 @@
-go 1.22.0
+go 1.25.0
 
 use (
 	.
+	./adapters/email/sendgrid
+	./adapters/email/ses
+	./adapters/email/smtp
+	./adapters/files/gcs
+	./adapters/files/s3
+	./adapters/payment/stripe
+	./adapters/persistence/inmemory
+	./adapters/search/elasticsearch
+	./adapters/search/opensearch
+	./adapters/sms/twilio
+	./adapters/tracing/otel
 )
