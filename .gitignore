@@ -1,0 +1,12 @@
+# Worktrees
+.worktrees/
+
+# Go
+*.out
+coverage.html
+vendor/
+
+# IDE
+.idea/
+.vscode/
+*.swp
