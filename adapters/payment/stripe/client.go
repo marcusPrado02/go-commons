@@ -33,7 +33,11 @@ type PaymentIntentResult struct {
 }
 
 // CreatePaymentIntent creates a new Stripe PaymentIntent.
+// Amount must be > 0 (smallest currency unit, e.g. cents for USD).
 func (c *Client) CreatePaymentIntent(_ context.Context, amount int64, currency, description string) (PaymentIntentResult, error) {
+	if amount <= 0 {
+		return PaymentIntentResult{}, fmt.Errorf("stripe: amount must be > 0, got %d", amount)
+	}
 	params := &stripe.PaymentIntentParams{
 		Amount:      stripe.Int64(amount),
 		Currency:    stripe.String(currency),
@@ -70,6 +74,9 @@ type RefundResult struct {
 
 // Refund creates a full refund for the given charge.
 func (c *Client) Refund(_ context.Context, chargeID string) (RefundResult, error) {
+	if chargeID == "" {
+		return RefundResult{}, fmt.Errorf("stripe: chargeID cannot be empty")
+	}
 	params := &stripe.RefundParams{Charge: stripe.String(chargeID)}
 	r, err := refund.New(params)
 	if err != nil {

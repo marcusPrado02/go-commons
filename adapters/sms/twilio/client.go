@@ -4,9 +4,11 @@ package twilio
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"github.com/marcusPrado02/go-commons/ports/sms"
 	twilioapi "github.com/twilio/twilio-go"
+	twilioClient "github.com/twilio/twilio-go/client"
 	openapi "github.com/twilio/twilio-go/rest/api/v2010"
 )
 
@@ -17,15 +19,32 @@ type Client struct {
 	accountSID string
 }
 
+// Option configures a Twilio Client.
+type Option func(*twilioapi.ClientParams)
+
+// WithHTTPClient injects a custom HTTP client into the underlying Twilio SDK.
+// Used in tests to intercept HTTP requests with a mock server.
+// Credentials are carried from the New() arguments so the SDK can authenticate.
+func WithHTTPClient(hc *http.Client) Option {
+	return func(p *twilioapi.ClientParams) {
+		creds := twilioClient.NewCredentials(p.Username, p.Password)
+		p.Client = &twilioClient.Client{Credentials: creds, HTTPClient: hc}
+	}
+}
+
 // New creates a new Twilio SMS client.
-func New(accountSID, authToken, fromNumber string) (*Client, error) {
+func New(accountSID, authToken, fromNumber string, opts ...Option) (*Client, error) {
 	if accountSID == "" || authToken == "" || fromNumber == "" {
 		return nil, fmt.Errorf("twilio: accountSID, authToken, and fromNumber are required")
 	}
-	client := twilioapi.NewRestClientWithParams(twilioapi.ClientParams{
+	params := twilioapi.ClientParams{
 		Username: accountSID,
 		Password: authToken,
-	})
+	}
+	for _, o := range opts {
+		o(&params)
+	}
+	client := twilioapi.NewRestClientWithParams(params)
 	return &Client{twilio: client, from: fromNumber, accountSID: accountSID}, nil
 }
 
