@@ -7,6 +7,10 @@ linters:
     - gosimple
     - unused
     - misspell
+    - nilnil
+    - gocritic
+    - errname
+    - cyclop
 
 linters-settings:
   revive:
@@ -14,8 +18,20 @@ linters-settings:
       - name: exported
         arguments: ["checkPrivateReceivers", "sayRepetitiveInsteadOfStutters"]
 
+  cyclop:
+    # Maximum cyclomatic complexity per function.
+    max-complexity: 15
+
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - style
+      - performance
+
 issues:
   exclude-rules:
     - path: _test\.go
       linters:
         - errcheck
+        - gocritic
+        - nilnil
