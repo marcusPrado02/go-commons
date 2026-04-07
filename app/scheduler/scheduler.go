@@ -4,6 +4,8 @@ package scheduler
 import (
 	"context"
 	"fmt"
+	"log/slog"
+	"runtime/debug"
 
 	"github.com/robfig/cron/v3"
 )
@@ -13,6 +15,9 @@ type Job interface {
 	Name() string
 	Run(ctx context.Context) error
 }
+
+// ErrorHandler is called when a job returns an error or panics.
+type ErrorHandler func(job Job, err error)
 
 // Scheduler registers jobs on cron schedules and manages their lifecycle.
 type Scheduler interface {
@@ -25,35 +30,62 @@ type Scheduler interface {
 	Stop(ctx context.Context) error
 }
 
+// Option configures a Scheduler.
+type Option func(*defaultScheduler)
+
+// WithErrorHandler sets a custom handler for job errors and panics.
+// If not set, errors are logged via slog and panics are logged with stack trace.
+func WithErrorHandler(h ErrorHandler) Option {
+	return func(s *defaultScheduler) { s.onError = h }
+}
+
 type defaultScheduler struct {
-	cron *cron.Cron
+	cron    *cron.Cron
+	onError ErrorHandler
 }
 
 // NewScheduler creates a Scheduler using standard cron expressions plus descriptors (@every, @hourly, etc.).
-func NewScheduler() Scheduler {
-	return &defaultScheduler{
+func NewScheduler(opts ...Option) Scheduler {
+	s := &defaultScheduler{
 		cron: cron.New(cron.WithSeconds()),
 	}
+	for _, o := range opts {
+		o(s)
+	}
+	return s
 }
 
 // Register validates the schedule expression and adds the job.
 func (s *defaultScheduler) Register(job Job, schedule string) error {
-	// Validate expression before adding
 	p := cron.NewParser(cron.Second | cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow | cron.Descriptor)
 	if _, err := p.Parse(schedule); err != nil {
 		return fmt.Errorf("scheduler: invalid cron expression %q for job %q: %w", schedule, job.Name(), err)
 	}
 
 	_, err := s.cron.AddFunc(schedule, func() {
-		defer func() {
-			if r := recover(); r != nil {
-				// Panic recovery — log or handle r in production via a Logger option
-				_ = r
-			}
-		}()
-		_ = job.Run(context.Background())
+		s.runSafe(job)
 	})
 	return err
+}
+
+func (s *defaultScheduler) runSafe(job Job) {
+	defer func() {
+		if r := recover(); r != nil {
+			err := fmt.Errorf("panic: %v\n%s", r, debug.Stack())
+			s.handleError(job, err)
+		}
+	}()
+	if err := job.Run(context.Background()); err != nil {
+		s.handleError(job, err)
+	}
+}
+
+func (s *defaultScheduler) handleError(job Job, err error) {
+	if s.onError != nil {
+		s.onError(job, err)
+		return
+	}
+	slog.Error("scheduler: job error", "job", job.Name(), "error", err)
 }
 
 // Start begins the scheduler. Non-blocking.

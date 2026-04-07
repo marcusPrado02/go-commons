@@ -56,8 +56,11 @@ func (c *Client) Send(ctx context.Context, email emailport.Email) (emailport.Ema
 }
 
 // SendWithTemplate is not supported by SES v1 — returns unsupported error.
-func (c *Client) SendWithTemplate(_ context.Context, _ emailport.TemplateEmailRequest) (emailport.EmailReceipt, error) {
-	return emailport.EmailReceipt{}, fmt.Errorf("ses: SendWithTemplate requires SES v2 — use the sesv2 adapter")
+func (c *Client) SendWithTemplate(_ context.Context, req emailport.TemplateEmailRequest) (emailport.EmailReceipt, error) {
+	return emailport.EmailReceipt{}, fmt.Errorf(
+		"ses: SendWithTemplate is not supported in SES v1 — migrate to adapters/email/sesv2 to use template %q",
+		req.TemplateName,
+	)
 }
 
 // Ping verifies SES connectivity by listing identities.

@@ -9,6 +9,7 @@ import (
 	"mime/multipart"
 	"net"
 	"net/smtp"
+	"strings"
 	"time"
 
 	emailport "github.com/marcusPrado02/go-commons/ports/email"
@@ -41,7 +42,7 @@ func New(host string, port int, username, password string, from emailport.EmailA
 	return c
 }
 
-// Send delivers an email via SMTP.
+// Send delivers an email via SMTP with TLS.
 func (c *Client) Send(ctx context.Context, email emailport.Email) (emailport.EmailReceipt, error) {
 	if err := email.Validate(); err != nil {
 		return emailport.EmailReceipt{}, fmt.Errorf("smtp: %w", err)
@@ -55,7 +56,10 @@ func (c *Client) Send(ctx context.Context, email emailport.Email) (emailport.Ema
 		tos[i] = t.Value
 	}
 
-	msg := c.buildMessage(email)
+	msg, err := c.buildMessage(email, tos)
+	if err != nil {
+		return emailport.EmailReceipt{}, fmt.Errorf("smtp: build message failed: %w", err)
+	}
 
 	dialer := &net.Dialer{Timeout: c.timeout}
 	conn, err := tls.DialWithDialer(dialer, "tcp", addr, &tls.Config{ServerName: c.host})
@@ -65,6 +69,7 @@ func (c *Client) Send(ctx context.Context, email emailport.Email) (emailport.Ema
 
 	client, err := smtp.NewClient(conn, c.host)
 	if err != nil {
+		_ = conn.Close()
 		return emailport.EmailReceipt{}, fmt.Errorf("smtp: client creation failed: %w", err)
 	}
 	defer client.Close()
@@ -73,32 +78,32 @@ func (c *Client) Send(ctx context.Context, email emailport.Email) (emailport.Ema
 		return emailport.EmailReceipt{}, fmt.Errorf("smtp: auth failed: %w", err)
 	}
 	if err := client.Mail(c.from.Value); err != nil {
-		return emailport.EmailReceipt{}, err
+		return emailport.EmailReceipt{}, fmt.Errorf("smtp: MAIL FROM failed: %w", err)
 	}
 	for _, to := range tos {
 		if err := client.Rcpt(to); err != nil {
-			return emailport.EmailReceipt{}, err
+			return emailport.EmailReceipt{}, fmt.Errorf("smtp: RCPT TO %q failed: %w", to, err)
 		}
 	}
 	w, err := client.Data()
 	if err != nil {
-		return emailport.EmailReceipt{}, err
+		return emailport.EmailReceipt{}, fmt.Errorf("smtp: DATA failed: %w", err)
 	}
 	if _, err = w.Write(msg); err != nil {
-		return emailport.EmailReceipt{}, err
+		return emailport.EmailReceipt{}, fmt.Errorf("smtp: write message failed: %w", err)
 	}
 	if err = w.Close(); err != nil {
-		return emailport.EmailReceipt{}, err
+		return emailport.EmailReceipt{}, fmt.Errorf("smtp: close DATA failed: %w", err)
 	}
 	return emailport.EmailReceipt{}, nil
 }
 
 // SendWithTemplate is not natively supported by SMTP — render template first, then call Send.
 func (c *Client) SendWithTemplate(_ context.Context, _ emailport.TemplateEmailRequest) (emailport.EmailReceipt, error) {
-	return emailport.EmailReceipt{}, fmt.Errorf("smtp: SendWithTemplate not supported — render template with TemplatePort first")
+	return emailport.EmailReceipt{}, fmt.Errorf("smtp: SendWithTemplate not supported — render template with TemplatePort first, then call Send")
 }
 
-// Ping sends an EHLO to verify the SMTP server is reachable.
+// Ping verifies that the SMTP server is reachable by opening a TLS connection.
 func (c *Client) Ping(_ context.Context) error {
 	addr := fmt.Sprintf("%s:%d", c.host, c.port)
 	dialer := &net.Dialer{Timeout: c.timeout}
@@ -106,30 +111,43 @@ func (c *Client) Ping(_ context.Context) error {
 	if err != nil {
 		return fmt.Errorf("smtp: ping failed: %w", err)
 	}
-	conn.Close()
-	return nil
+	return conn.Close()
 }
 
-func (c *Client) buildMessage(email emailport.Email) []byte {
+// buildMessage constructs the RFC 5322 message bytes.
+// tos must contain the resolved To addresses (already extracted from email.To).
+func (c *Client) buildMessage(email emailport.Email, tos []string) ([]byte, error) {
 	var buf bytes.Buffer
 	w := multipart.NewWriter(&buf)
 
 	buf.WriteString("From: " + c.from.Value + "\r\n")
-	buf.WriteString("To: " + email.To[0].Value + "\r\n")
+	buf.WriteString("To: " + strings.Join(tos, ", ") + "\r\n")
 	buf.WriteString("Subject: " + email.Subject + "\r\n")
 	buf.WriteString("MIME-Version: 1.0\r\n")
 	buf.WriteString("Content-Type: multipart/alternative; boundary=\"" + w.Boundary() + "\"\r\n\r\n")
 
 	if email.Text != "" {
-		part, _ := w.CreatePart(map[string][]string{"Content-Type": {"text/plain; charset=UTF-8"}})
-		part.Write([]byte(email.Text))
+		part, err := w.CreatePart(map[string][]string{"Content-Type": {"text/plain; charset=UTF-8"}})
+		if err != nil {
+			return nil, err
+		}
+		if _, err = part.Write([]byte(email.Text)); err != nil {
+			return nil, err
+		}
 	}
 	if email.HTML != "" {
-		part, _ := w.CreatePart(map[string][]string{"Content-Type": {"text/html; charset=UTF-8"}})
-		part.Write([]byte(email.HTML))
+		part, err := w.CreatePart(map[string][]string{"Content-Type": {"text/html; charset=UTF-8"}})
+		if err != nil {
+			return nil, err
+		}
+		if _, err = part.Write([]byte(email.HTML)); err != nil {
+			return nil, err
+		}
 	}
-	w.Close()
-	return buf.Bytes()
+	if err := w.Close(); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
 }
 
 var _ emailport.EmailPort = (*Client)(nil)

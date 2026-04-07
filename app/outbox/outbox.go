@@ -81,7 +81,14 @@ type OutboxPublisher struct {
 }
 
 // NewPublisher creates an OutboxPublisher with the given store and publish function.
+// Panics if store or publish are nil.
 func NewPublisher(store OutboxStore, publish PublishFunc, opts ...Option) *OutboxPublisher {
+	if store == nil {
+		panic("outbox: store must not be nil")
+	}
+	if publish == nil {
+		panic("outbox: publish function must not be nil")
+	}
 	o := publisherOptions{
 		pollingInterval: 5 * time.Second,
 		batchSize:       100,

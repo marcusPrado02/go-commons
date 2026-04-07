@@ -4,6 +4,7 @@ package resilience
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"math/rand"
 	"time"
@@ -47,6 +48,25 @@ type defaultExecutor struct{}
 // NewExecutor creates a new ResilienceExecutor.
 func NewExecutor() ResilienceExecutor {
 	return &defaultExecutor{}
+}
+
+// ValidatePolicies returns an error if the ResiliencePolicySet has invalid configuration.
+func ValidatePolicies(p ResiliencePolicySet) error {
+	if p.RetryAttempts < 0 {
+		return fmt.Errorf("resilience: RetryAttempts must be >= 0, got %d", p.RetryAttempts)
+	}
+	if p.RetryDelay < 0 {
+		return fmt.Errorf("resilience: RetryDelay must be >= 0, got %v", p.RetryDelay)
+	}
+	if p.RetryMaxDelay > 0 && p.RetryMaxDelay < p.RetryDelay {
+		return fmt.Errorf("resilience: RetryMaxDelay (%v) must be >= RetryDelay (%v)", p.RetryMaxDelay, p.RetryDelay)
+	}
+	if p.CircuitBreaker != nil {
+		if p.CircuitBreaker.FailureThreshold < 0 || p.CircuitBreaker.FailureThreshold > 1 {
+			return fmt.Errorf("resilience: CircuitBreaker.FailureThreshold must be in [0, 1], got %v", p.CircuitBreaker.FailureThreshold)
+		}
+	}
+	return nil
 }
 
 func (e *defaultExecutor) Run(ctx context.Context, name string, policies ResiliencePolicySet, action func(ctx context.Context) error) error {
