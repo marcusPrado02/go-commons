@@ -74,6 +74,23 @@ func (r Result[T]) Unwrap() (T, error) {
 	return r.value, nil
 }
 
+// Or returns the held value on success, or fallback if failed.
+func (r Result[T]) Or(fallback T) T {
+	if r.IsFail() {
+		return fallback
+	}
+	return r.value
+}
+
+// OrElse returns the held value on success, or the result of calling f if failed.
+// Use this instead of Or when the fallback value is expensive to compute.
+func (r Result[T]) OrElse(f func() T) T {
+	if r.IsFail() {
+		return f()
+	}
+	return r.value
+}
+
 // Map transforms a successful Result[T] into Result[U] by applying f.
 // If r is failed, the failure propagates unchanged.
 func Map[T, U any](r Result[T], f func(T) U) Result[U] {

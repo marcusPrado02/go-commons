@@ -88,6 +88,13 @@ func (r *InMemoryRepository[E, ID]) FindAll(ctx context.Context, req persistence
 	return r.Search(ctx, req, spec, persistence.Sort{})
 }
 
+// Clear removes all entities from the repository. Useful for resetting state between tests.
+func (r *InMemoryRepository[E, ID]) Clear() {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.storage = make(map[ID]E)
+}
+
 // Search returns a page of entities matching the specification, sorted if a SortFunc is configured.
 func (r *InMemoryRepository[E, ID]) Search(_ context.Context, req persistence.PageRequest, spec persistence.Specification[E], s persistence.Sort) (persistence.PageResult[E], error) {
 	r.mu.RLock()

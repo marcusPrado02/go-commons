@@ -92,9 +92,11 @@ const (
 type StorageClass string
 
 const (
-	StorageClassStandard StorageClass = "STANDARD"
-	StorageClassGlacier  StorageClass = "GLACIER"
-	StorageClassIA       StorageClass = "STANDARD_IA"
+	StorageClassStandard           StorageClass = "STANDARD"
+	StorageClassGlacier            StorageClass = "GLACIER"
+	StorageClassIA                 StorageClass = "STANDARD_IA"
+	StorageClassIntelligentTiering StorageClass = "INTELLIGENT_TIERING" // AWS S3 Intelligent-Tiering
+	StorageClassColdline           StorageClass = "COLDLINE"             // GCS Coldline
 )
 
 // UploadOption configures an upload operation.
