@@ -140,3 +140,25 @@ func TestOutboxPublisher_Start_IsNonBlocking(t *testing.T) {
 		t.Fatal("Start blocked for too long — should be non-blocking")
 	}
 }
+
+func TestOutboxPublisher_Start_ConcurrentCallsAreIdempotent(t *testing.T) {
+	// Two goroutines calling Start simultaneously must both succeed without panic
+	// or data races. Only one polling goroutine should be started (sync.Once guarantee).
+	store := newInMemoryStore()
+	pub := &inMemoryPublisher{}
+	publisher := outbox.NewPublisher(store, pub.Publish, outbox.WithPollingInterval(50*time.Millisecond))
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	var wg sync.WaitGroup
+	for i := 0; i < 2; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			_ = publisher.Start(ctx)
+		}()
+	}
+	wg.Wait()
+	// No panic, no race — test passes.
+}

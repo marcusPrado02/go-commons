@@ -100,3 +100,21 @@ func TestInMemoryRepository_Search_WithSort(t *testing.T) {
 	assert.Equal(t, "Bob", result.Content[1].Name)
 	assert.Equal(t, "Charlie", result.Content[2].Name)
 }
+
+// BenchmarkInMemoryRepository_FindAll measures Specification + pagination overhead.
+func BenchmarkInMemoryRepository_FindAll(b *testing.B) {
+	for _, n := range []int{1_000, 100_000} {
+		repo := newRepo()
+		ctx := context.Background()
+		for i := 0; i < n; i++ {
+			_, _ = repo.Save(ctx, user{ID: fmt.Sprintf("%d", i), Name: "User"})
+		}
+		allSpec := persistence.Spec[user](func(user) bool { return true })
+		b.Run(fmt.Sprintf("N=%d", n), func(b *testing.B) {
+			b.ResetTimer()
+			for i := 0; i < b.N; i++ {
+				_, _ = repo.FindAll(ctx, persistence.PageRequest{Page: 0, Size: 100}, allSpec)
+			}
+		})
+	}
+}
