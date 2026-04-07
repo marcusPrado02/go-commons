@@ -8,6 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsses "github.com/aws/aws-sdk-go-v2/service/ses"
 	"github.com/aws/aws-sdk-go-v2/service/ses/types"
+	kerrors "github.com/marcusPrado02/go-commons/kernel/errors"
 	emailport "github.com/marcusPrado02/go-commons/ports/email"
 )
 
@@ -55,12 +56,13 @@ func (c *Client) Send(ctx context.Context, email emailport.Email) (emailport.Ema
 	return emailport.EmailReceipt{MessageID: aws.ToString(out.MessageId)}, nil
 }
 
-// SendWithTemplate is not supported by SES v1 — returns unsupported error.
+// SendWithTemplate is not supported by SES v1 — use adapters/email/sesv2 instead.
 func (c *Client) SendWithTemplate(_ context.Context, req emailport.TemplateEmailRequest) (emailport.EmailReceipt, error) {
-	return emailport.EmailReceipt{}, fmt.Errorf(
-		"ses: SendWithTemplate is not supported in SES v1 — migrate to adapters/email/sesv2 to use template %q",
-		req.TemplateName,
-	)
+	return emailport.EmailReceipt{}, kerrors.ErrTechnical.
+		WithDetail("reason", "SES v1 does not support template sending").
+		WithDetail("template", req.TemplateName).
+		WithDetail("migrate_to", "adapters/email/sesv2").
+		WithCause(fmt.Errorf("ses: SendWithTemplate not supported — migrate to adapters/email/sesv2"))
 }
 
 // Ping verifies SES connectivity by listing identities.
