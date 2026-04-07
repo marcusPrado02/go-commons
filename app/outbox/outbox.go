@@ -10,6 +10,8 @@ import (
 	"context"
 	"sync"
 	"time"
+
+	obs "github.com/marcusPrado02/go-commons/ports/observability"
 )
 
 // OutboxMessage is a unit of work persisted alongside a domain aggregate.
@@ -47,6 +49,7 @@ type publisherOptions struct {
 	pollingInterval time.Duration
 	batchSize       int
 	concurrency     int
+	logger          obs.Logger
 }
 
 // Option configures an OutboxPublisher.
@@ -68,6 +71,12 @@ func WithBatchSize(n int) Option {
 // Default: 1 (sequential — preserves message ordering within a batch).
 func WithConcurrency(n int) Option {
 	return func(o *publisherOptions) { o.concurrency = n }
+}
+
+// WithLogger sets a structured logger for delivery errors and lifecycle events.
+// If not set, errors are silently ignored (callers rely on dead-letter monitoring).
+func WithLogger(l obs.Logger) Option {
+	return func(o *publisherOptions) { o.logger = l }
 }
 
 // OutboxPublisher polls the OutboxStore and delivers pending messages via PublishFunc.
@@ -152,13 +161,26 @@ func (p *OutboxPublisher) run(ctx context.Context) {
 
 func (p *OutboxPublisher) processOnce(ctx context.Context) {
 	msgs, err := p.store.FetchPending(ctx, p.opts.batchSize)
-	if err != nil || len(msgs) == 0 {
+	if err != nil {
+		if p.opts.logger != nil {
+			p.opts.logger.Error(ctx, "outbox: fetch pending failed", obs.Err(err))
+		}
+		return
+	}
+	if len(msgs) == 0 {
 		return
 	}
 	for _, msg := range msgs {
 		if err := p.publish(ctx, msg); err != nil {
+			if p.opts.logger != nil {
+				p.opts.logger.Error(ctx, "outbox: publish failed", obs.F("message_id", msg.ID), obs.Err(err))
+			}
 			continue // leave unprocessed for next cycle
 		}
-		_ = p.store.MarkProcessed(ctx, msg.ID)
+		if err := p.store.MarkProcessed(ctx, msg.ID); err != nil {
+			if p.opts.logger != nil {
+				p.opts.logger.Error(ctx, "outbox: mark processed failed", obs.F("message_id", msg.ID), obs.Err(err))
+			}
+		}
 	}
 }

@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"log/slog"
 	"runtime/debug"
+	"time"
 
 	"github.com/robfig/cron/v3"
+	obs "github.com/marcusPrado02/go-commons/ports/observability"
 )
 
 // Job is a named, runnable unit of work.
@@ -39,9 +41,15 @@ func WithErrorHandler(h ErrorHandler) Option {
 	return func(s *defaultScheduler) { s.onError = h }
 }
 
+// WithLogger sets a structured logger for job lifecycle events (start, completion, errors).
+func WithLogger(l obs.Logger) Option {
+	return func(s *defaultScheduler) { s.logger = l }
+}
+
 type defaultScheduler struct {
 	cron    *cron.Cron
 	onError ErrorHandler
+	logger  obs.Logger
 }
 
 // NewScheduler creates a Scheduler using standard cron expressions plus descriptors (@every, @hourly, etc.).
@@ -69,14 +77,26 @@ func (s *defaultScheduler) Register(job Job, schedule string) error {
 }
 
 func (s *defaultScheduler) runSafe(job Job) {
+	ctx := context.Background()
 	defer func() {
 		if r := recover(); r != nil {
 			err := fmt.Errorf("panic: %v\n%s", r, debug.Stack())
 			s.handleError(job, err)
 		}
 	}()
-	if err := job.Run(context.Background()); err != nil {
+	if s.logger != nil {
+		s.logger.Info(ctx, "scheduler: job started", obs.F("job", job.Name()))
+	}
+	start := time.Now()
+	if err := job.Run(ctx); err != nil {
 		s.handleError(job, err)
+		return
+	}
+	if s.logger != nil {
+		s.logger.Info(ctx, "scheduler: job completed",
+			obs.F("job", job.Name()),
+			obs.F("duration_ms", time.Since(start).Milliseconds()),
+		)
 	}
 }
 

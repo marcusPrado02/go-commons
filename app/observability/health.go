@@ -52,6 +52,36 @@ type HealthCheck interface {
 	Check(ctx context.Context) HealthCheckResult
 }
 
+// timedCheck wraps a HealthCheck with a per-check execution timeout.
+type timedCheck struct {
+	inner   HealthCheck
+	timeout time.Duration
+}
+
+// WithCheckTimeout wraps a HealthCheck to enforce a per-check execution deadline.
+// If the check exceeds d, it returns StatusDown with a "timed_out" detail.
+func WithCheckTimeout(check HealthCheck, d time.Duration) HealthCheck {
+	return &timedCheck{inner: check, timeout: d}
+}
+
+func (t *timedCheck) Name() string          { return t.inner.Name() }
+func (t *timedCheck) Type() HealthCheckType { return t.inner.Type() }
+func (t *timedCheck) Check(ctx context.Context) HealthCheckResult {
+	ctx, cancel := context.WithTimeout(ctx, t.timeout)
+	defer cancel()
+	done := make(chan HealthCheckResult, 1)
+	go func() { done <- t.inner.Check(ctx) }()
+	select {
+	case result := <-done:
+		return result
+	case <-ctx.Done():
+		return HealthCheckResult{
+			Status:  StatusDown,
+			Details: map[string]any{"error": "timed out after " + t.timeout.String()},
+		}
+	}
+}
+
 // HealthChecks aggregates multiple HealthCheck implementations.
 type HealthChecks struct {
 	checks []HealthCheck

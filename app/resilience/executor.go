@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/sony/gobreaker"
+	obs "github.com/marcusPrado02/go-commons/ports/observability"
 )
 
 // ResiliencePolicySet configures the retry and circuit breaker behavior.
@@ -43,11 +44,25 @@ type ResilienceExecutor interface {
 	Run(ctx context.Context, name string, policies ResiliencePolicySet, action func(ctx context.Context) error) error
 }
 
-type defaultExecutor struct{}
+// ExecutorOption configures a ResilienceExecutor.
+type ExecutorOption func(*defaultExecutor)
+
+// WithLogger sets a structured logger for retry attempts and circuit breaker events.
+func WithLogger(l obs.Logger) ExecutorOption {
+	return func(e *defaultExecutor) { e.logger = l }
+}
+
+type defaultExecutor struct {
+	logger obs.Logger
+}
 
 // NewExecutor creates a new ResilienceExecutor.
-func NewExecutor() ResilienceExecutor {
-	return &defaultExecutor{}
+func NewExecutor(opts ...ExecutorOption) ResilienceExecutor {
+	e := &defaultExecutor{}
+	for _, opt := range opts {
+		opt(e)
+	}
+	return e
 }
 
 // ValidatePolicies returns an error if the ResiliencePolicySet has invalid configuration.
@@ -101,6 +116,15 @@ func (e *defaultExecutor) Run(ctx context.Context, name string, policies Resilie
 
 		if attempt < policies.RetryAttempts {
 			delay := jitterDelay(attempt, policies.RetryDelay, policies.RetryMaxDelay)
+			if e.logger != nil {
+				e.logger.Warn(ctx, "resilience: retrying after error",
+					obs.F("name", name),
+					obs.F("attempt", attempt+1),
+					obs.F("max_attempts", policies.RetryAttempts),
+					obs.F("delay_ms", delay.Milliseconds()),
+					obs.Err(lastErr),
+				)
+			}
 			select {
 			case <-ctx.Done():
 				return ctx.Err()
