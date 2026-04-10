@@ -85,6 +85,9 @@ func ValidatePolicies(p ResiliencePolicySet) error {
 }
 
 func (e *defaultExecutor) Run(ctx context.Context, name string, policies ResiliencePolicySet, action func(ctx context.Context) error) error {
+	if err := ValidatePolicies(policies); err != nil {
+		return err
+	}
 	run := action
 	if policies.CircuitBreaker != nil {
 		cb := newCircuitBreaker(name, policies.CircuitBreaker)

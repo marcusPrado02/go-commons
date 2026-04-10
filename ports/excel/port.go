@@ -15,13 +15,18 @@ type ExcelPort interface {
 
 // Sheet defines a single worksheet within an Excel workbook.
 type Sheet struct {
-	Name    string
+	// Name is the tab label for the sheet. Must be unique within the workbook.
+	Name string
+	// Headers is the first row of the sheet, used as column labels.
 	Headers []string
-	Rows    [][]any
+	// Rows contains the data rows. Each element must be JSON-serializable or a primitive type.
+	Rows [][]any
 }
 
 // ExcelRequest describes the workbook to generate.
 type ExcelRequest struct {
+	// Filename is the suggested file name for the generated workbook (e.g. "report.xlsx").
 	Filename string
-	Sheets   []Sheet
+	// Sheets is the ordered list of worksheets to include in the workbook.
+	Sheets []Sheet
 }

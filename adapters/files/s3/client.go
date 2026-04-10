@@ -44,7 +44,17 @@ func WithSSEAlgorithm(alg string) Option {
 
 // New creates an S3 Client from an aws.Config.
 func New(cfg aws.Config, opts ...Option) *Client {
-	svc := awss3.NewFromConfig(cfg)
+	return NewWithOptions(cfg, nil, opts...)
+}
+
+// NewWithOptions creates an S3 Client with additional AWS S3 options (e.g. a custom endpoint for LocalStack).
+// awsOpts are applied to the underlying *awss3.Client. Pass nil if not needed.
+func NewWithOptions(cfg aws.Config, awsOpts func(*awss3.Options), opts ...Option) *Client {
+	svc := awss3.NewFromConfig(cfg, func(o *awss3.Options) {
+		if awsOpts != nil {
+			awsOpts(o)
+		}
+	})
 	o := clientOptions{defaultStorageClass: filesport.StorageClassStandard}
 	for _, opt := range opts {
 		opt(&o)

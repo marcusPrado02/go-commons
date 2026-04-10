@@ -10,8 +10,11 @@ import (
 type Format string
 
 const (
-	FormatGzip   Format = "gzip"
-	FormatZstd   Format = "zstd"
+	// FormatGzip uses the gzip compression format (RFC 1952). Supported by all adapters.
+	FormatGzip Format = "gzip"
+	// FormatZstd uses the Zstandard compression format. Requires an adapter with zstd support.
+	FormatZstd Format = "zstd"
+	// FormatSnappy uses Google's Snappy compression format. Requires an adapter with snappy support.
 	FormatSnappy Format = "snappy"
 )
 

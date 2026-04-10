@@ -1,4 +1,4 @@
-go 1.25.0
+go 1.23
 
 use (
 	.
@@ -6,11 +6,17 @@ use (
 	./adapters/compression/stdlib
 	./adapters/email/sendgrid
 	./adapters/email/ses
+	./adapters/email/sesv2
 	./adapters/email/smtp
 	./adapters/files/gcs
 	./adapters/files/s3
 	./adapters/payment/stripe
 	./adapters/persistence/inmemory
+	./adapters/push/fcm
+	./adapters/queue/rabbitmq
+	./adapters/queue/sqs
+	./adapters/secrets/awsssm
+	./adapters/secrets/vault
 	./adapters/search/elasticsearch
 	./adapters/search/opensearch
 	./adapters/sms/twilio

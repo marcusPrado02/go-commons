@@ -2,7 +2,10 @@
 // All methods accept context.Context as the first parameter.
 package persistence
 
-import "context"
+import (
+	"context"
+	"fmt"
+)
 
 // Repository is the base CRUD port for a domain entity E identified by ID.
 // Save is an upsert — it may modify the entity (e.g. assign a generated ID or update timestamps).
@@ -52,9 +55,23 @@ type Sort struct {
 }
 
 // PageRequest specifies which page to fetch. Pages are zero-indexed.
+// Size must be greater than zero; call Validate before passing to a repository.
 type PageRequest struct {
 	Page int
+	// Size is the maximum number of results per page. Must be > 0.
 	Size int
+}
+
+// Validate returns an error if the PageRequest is invalid.
+// Repositories should call this at the start of FindAll and Search.
+func (p PageRequest) Validate() error {
+	if p.Size <= 0 {
+		return fmt.Errorf("persistence: PageRequest.Size must be > 0, got %d", p.Size)
+	}
+	if p.Page < 0 {
+		return fmt.Errorf("persistence: PageRequest.Page must be >= 0, got %d", p.Page)
+	}
+	return nil
 }
 
 // PageResult is a paginated response containing a slice of entities.

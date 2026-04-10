@@ -139,6 +139,9 @@ func (r *InMemoryRepository[E, ID]) FindAll(ctx context.Context, req persistence
 
 // Search returns a page of entities matching the specification, sorted if a SortFunc is configured.
 func (r *InMemoryRepository[E, ID]) Search(_ context.Context, req persistence.PageRequest, spec persistence.Specification[E], s persistence.Sort) (persistence.PageResult[E], error) {
+	if err := req.Validate(); err != nil {
+		return persistence.PageResult[E]{}, err
+	}
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
