@@ -11,7 +11,7 @@ import (
 	"github.com/marcusPrado02/go-commons/ports/secrets"
 )
 
-var _ secrets.SecretsPort = (*vault.Client)(nil)
+var _ secrets.Port = (*vault.Client)(nil)
 
 func newTestServer(t *testing.T, handler http.HandlerFunc) (*httptest.Server, *vault.Client) {
 	t.Helper()

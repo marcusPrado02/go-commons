@@ -6,8 +6,8 @@ import (
 	"time"
 )
 
-// CachePort provides get/set/delete operations with TTL support.
-type CachePort interface {
+// Port provides get/set/delete operations with TTL support.
+type Port interface {
 	// Get retrieves a cached value. Returns (value, true, nil) if found,
 	// (nil, false, nil) if not found, or (nil, false, err) on error.
 	Get(ctx context.Context, key string) (any, bool, error)

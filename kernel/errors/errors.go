@@ -41,6 +41,8 @@ const (
 
 // Problem is an immutable, rich domain error. Use the With* builders to add context.
 // All With* methods return a new copy — the receiver is never modified.
+//
+//nolint:errname // "Problem" is an intentional domain name; "ProblemError" would be redundant.
 type Problem struct {
 	Code     ErrorCode
 	Category ErrorCategory
@@ -64,6 +66,8 @@ func NewProblem(code ErrorCode, category ErrorCategory, severity Severity, messa
 }
 
 // Error implements the error interface.
+//
+//nolint:gocritic // hugeParam: Problem is a value type by design; pointer receivers would break error interface callers.
 func (p Problem) Error() string {
 	if p.Cause != nil {
 		return fmt.Sprintf("[%s] %s: %v", p.Code, p.Message, p.Cause)
@@ -72,9 +76,13 @@ func (p Problem) Error() string {
 }
 
 // Unwrap returns the cause, enabling errors.Is/As chaining.
+//
+//nolint:gocritic // hugeParam: value receiver intentional — see Error().
 func (p Problem) Unwrap() error { return p.Cause }
 
 // WithDetail returns a new Problem with the key-value pair added to Details.
+//
+//nolint:gocritic // hugeParam: value receiver intentional — see Error().
 func (p Problem) WithDetail(key string, value any) Problem {
 	details := make(map[string]any, len(p.Details)+1)
 	for k, v := range p.Details {

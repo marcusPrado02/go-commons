@@ -20,9 +20,9 @@ type AggregateAssertion[T Eventful] struct {
 	events []ddd.DomainEvent
 }
 
-// AssertAggregate begins a fluent assertion chain on the given aggregate.
+// Aggregate begins a fluent assertion chain on the given aggregate.
 // PullDomainEvents is called once and the result is held for all subsequent assertions.
-func AssertAggregate[T Eventful](t testing.TB, actual T) *AggregateAssertion[T] {
+func Aggregate[T Eventful](t testing.TB, actual T) *AggregateAssertion[T] {
 	t.Helper()
 	return &AggregateAssertion[T]{
 		t:      t,

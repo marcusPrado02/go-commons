@@ -6,11 +6,11 @@ import (
 	"io"
 )
 
-// ExcelPort generates Excel (.xlsx) files from structured data.
-type ExcelPort interface {
+// Port generates Excel (.xlsx) files from structured data.
+type Port interface {
 	// Generate produces an Excel file from the given request.
 	// The returned io.Reader contains the .xlsx content.
-	Generate(ctx context.Context, req ExcelRequest) (io.Reader, error)
+	Generate(ctx context.Context, req Request) (io.Reader, error)
 }
 
 // Sheet defines a single worksheet within an Excel workbook.
@@ -23,8 +23,8 @@ type Sheet struct {
 	Rows [][]any
 }
 
-// ExcelRequest describes the workbook to generate.
-type ExcelRequest struct {
+// Request describes the workbook to generate.
+type Request struct {
 	// Filename is the suggested file name for the generated workbook (e.g. "report.xlsx").
 	Filename string
 	// Sheets is the ordered list of worksheets to include in the workbook.

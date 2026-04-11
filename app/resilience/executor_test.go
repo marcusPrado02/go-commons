@@ -16,7 +16,7 @@ func TestExecutor_Run_Success(t *testing.T) {
 	exec := resilience.NewExecutor()
 	called := 0
 
-	err := exec.Run(context.Background(), "test-op", resilience.ResiliencePolicySet{
+	err := exec.Run(context.Background(), "test-op", resilience.PolicySet{
 		RetryAttempts: 3,
 		RetryDelay:    time.Millisecond,
 	}, func(ctx context.Context) error {
@@ -32,7 +32,7 @@ func TestExecutor_Run_RetriesOnError(t *testing.T) {
 	exec := resilience.NewExecutor()
 	var attempts int32
 
-	err := exec.Run(context.Background(), "test-op", resilience.ResiliencePolicySet{
+	err := exec.Run(context.Background(), "test-op", resilience.PolicySet{
 		RetryAttempts: 3,
 		RetryDelay:    time.Millisecond,
 		RetryMaxDelay: 10 * time.Millisecond,
@@ -52,7 +52,7 @@ func TestExecutor_Run_ExhaustsRetries(t *testing.T) {
 	exec := resilience.NewExecutor()
 	var attempts int32
 
-	err := exec.Run(context.Background(), "test-op", resilience.ResiliencePolicySet{
+	err := exec.Run(context.Background(), "test-op", resilience.PolicySet{
 		RetryAttempts: 2,
 		RetryDelay:    time.Millisecond,
 	}, func(ctx context.Context) error {
@@ -74,7 +74,7 @@ func TestExecutor_Run_RespectsContextCancellation(t *testing.T) {
 		cancel()
 	}()
 
-	err := exec.Run(ctx, "test-op", resilience.ResiliencePolicySet{
+	err := exec.Run(ctx, "test-op", resilience.PolicySet{
 		RetryAttempts: 10,
 		RetryDelay:    20 * time.Millisecond,
 	}, func(ctx context.Context) error {
@@ -89,7 +89,7 @@ func TestExecutor_Run_RespectsContextCancellation(t *testing.T) {
 func TestSupply_ReturnsValue(t *testing.T) {
 	exec := resilience.NewExecutor()
 
-	result, err := resilience.Supply(context.Background(), exec, "get-user", resilience.ResiliencePolicySet{
+	result, err := resilience.Supply(context.Background(), exec, "get-user", resilience.PolicySet{
 		RetryAttempts: 1,
 	}, func(ctx context.Context) (string, error) {
 		return "user-123", nil
@@ -102,7 +102,7 @@ func TestSupply_ReturnsValue(t *testing.T) {
 func TestSupply_ReturnsZeroOnError(t *testing.T) {
 	exec := resilience.NewExecutor()
 
-	result, err := resilience.Supply(context.Background(), exec, "get-user", resilience.ResiliencePolicySet{
+	result, err := resilience.Supply(context.Background(), exec, "get-user", resilience.PolicySet{
 		RetryAttempts: 0,
 	}, func(ctx context.Context) (string, error) {
 		return "", errors.New("not found")

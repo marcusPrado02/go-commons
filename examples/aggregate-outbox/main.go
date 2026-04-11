@@ -67,7 +67,7 @@ func Place(id string, amount int) result.Result[*Order] {
 // --- In-Memory Outbox Store -------------------------------------------------
 
 type memOutboxStore struct {
-	pending   []outbox.OutboxMessage
+	pending   []outbox.Message
 	processed map[string]bool
 }
 
@@ -75,13 +75,13 @@ func newMemStore() *memOutboxStore {
 	return &memOutboxStore{processed: make(map[string]bool)}
 }
 
-func (s *memOutboxStore) Save(_ context.Context, msgs []outbox.OutboxMessage) error {
+func (s *memOutboxStore) Save(_ context.Context, msgs []outbox.Message) error {
 	s.pending = append(s.pending, msgs...)
 	return nil
 }
 
-func (s *memOutboxStore) FetchPending(_ context.Context, limit int) ([]outbox.OutboxMessage, error) {
-	var out []outbox.OutboxMessage
+func (s *memOutboxStore) FetchPending(_ context.Context, limit int) ([]outbox.Message, error) {
+	var out []outbox.Message
 	for _, m := range s.pending {
 		if !s.processed[m.ID] {
 			out = append(out, m)
@@ -114,10 +114,10 @@ func main() {
 
 	// 2. Pull domain events and convert to outbox messages (simulating a transaction).
 	events := order.PullDomainEvents()
-	msgs := make([]outbox.OutboxMessage, 0, len(events))
+	msgs := make([]outbox.Message, 0, len(events))
 	for _, evt := range events {
 		payload, _ := json.Marshal(evt)
-		msgs = append(msgs, outbox.OutboxMessage{
+		msgs = append(msgs, outbox.Message{
 			ID:          fmt.Sprintf("%s-%s", order.ID(), evt.EventType()),
 			AggregateID: order.ID(),
 			EventType:   evt.EventType(),
@@ -134,7 +134,7 @@ func main() {
 	delivered := make(chan queue.Message, 10)
 	publisher := outbox.NewPublisher(
 		store,
-		func(ctx context.Context, msg outbox.OutboxMessage) error {
+		func(ctx context.Context, msg outbox.Message) error {
 			delivered <- queue.Message{ID: msg.ID, Payload: msg.Payload}
 			return nil
 		},

@@ -38,7 +38,7 @@ func uniqueQueue(t *testing.T) string {
 
 // --- compile-time interface check -----------------------------------------
 
-var _ queue.QueuePort = (*rabbitmq.Client)(nil)
+var _ queue.Port = (*rabbitmq.Client)(nil)
 
 // --- unit tests -----------------------------------------------------------
 

@@ -9,12 +9,12 @@ import (
 	"github.com/marcusPrado02/go-commons/ports/excel"
 )
 
-// Compile-time check that ExcelPort can be implemented.
-var _ excel.ExcelPort = (*nilExcel)(nil)
+// Compile-time check that Port can be implemented.
+var _ excel.Port = (*nilExcel)(nil)
 
 type nilExcel struct{}
 
-func (n *nilExcel) Generate(_ context.Context, _ excel.ExcelRequest) (io.Reader, error) {
+func (n *nilExcel) Generate(_ context.Context, _ excel.Request) (io.Reader, error) {
 	return strings.NewReader(""), nil
 }
 
@@ -36,7 +36,7 @@ func TestSheet_Fields(t *testing.T) {
 }
 
 func TestExcelRequest_Fields(t *testing.T) {
-	req := excel.ExcelRequest{
+	req := excel.Request{
 		Filename: "report.xlsx",
 		Sheets:   []excel.Sheet{{Name: "Sheet1"}},
 	}
@@ -56,8 +56,8 @@ func TestSheet_ZeroValue(t *testing.T) {
 }
 
 func TestExcelRequest_ZeroValue(t *testing.T) {
-	var req excel.ExcelRequest
+	var req excel.Request
 	if req.Filename != "" || req.Sheets != nil {
-		t.Fatal("expected zero-value ExcelRequest fields")
+		t.Fatal("expected zero-value Request fields")
 	}
 }

@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-// CacheContract is a reusable test suite for CachePort implementations.
+// CacheContract is a reusable test suite for Port implementations.
 //
 // Example:
 //
@@ -17,8 +17,8 @@ import (
 //	}
 type CacheContract struct {
 	suite.Suite
-	// Cache is the CachePort implementation under test.
-	Cache cache.CachePort
+	// Cache is the Port implementation under test.
+	Cache cache.Port
 }
 
 func (s *CacheContract) TestSet_Get_RoundTrip() {

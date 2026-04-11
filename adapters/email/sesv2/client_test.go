@@ -18,7 +18,7 @@ import (
 	emailport "github.com/marcusPrado02/go-commons/ports/email"
 )
 
-var _ emailport.EmailPort = (*sesv2.Client)(nil)
+var _ emailport.Port = (*sesv2.Client)(nil)
 
 func newTestClient(t *testing.T, handler http.HandlerFunc) *sesv2.Client {
 	t.Helper()
@@ -59,7 +59,7 @@ func TestSESv2_Send(t *testing.T) {
 
 	receipt, err := client.Send(context.Background(), emailport.Email{
 		From:    from,
-		To:      []emailport.EmailAddress{to},
+		To:      []emailport.Address{to},
 		Subject: "Hello",
 		Text:    "World",
 	})
@@ -100,7 +100,7 @@ func TestSESv2_Send_NoBody(t *testing.T) {
 
 	_, err := client.Send(context.Background(), emailport.Email{
 		From:    from,
-		To:      []emailport.EmailAddress{to},
+		To:      []emailport.Address{to},
 		Subject: "Empty body",
 		// HTML and Text both empty — should fail validation.
 	})
@@ -122,7 +122,7 @@ func TestSESv2_SendWithTemplate(t *testing.T) {
 
 	receipt, err := client.SendWithTemplate(context.Background(), emailport.TemplateEmailRequest{
 		From:         from,
-		To:           []emailport.EmailAddress{to},
+		To:           []emailport.Address{to},
 		TemplateName: "welcome-email",
 		Variables:    map[string]any{"username": "Alice", "plan": "pro"},
 	})

@@ -6,15 +6,15 @@ import (
 	"time"
 )
 
-// AuditLog records immutable audit events for compliance and forensics.
-type AuditLog interface {
+// Log records immutable audit events for compliance and forensics.
+type Log interface {
 	// Record persists a single audit event. Implementations must be idempotent
-	// on AuditEvent.ID to avoid duplicate entries on retry.
-	Record(ctx context.Context, event AuditEvent) error
+	// on Event.ID to avoid duplicate entries on retry.
+	Record(ctx context.Context, event Event) error
 }
 
-// AuditEvent describes a single auditable action.
-type AuditEvent struct {
+// Event describes a single auditable action.
+type Event struct {
 	// ID is a globally unique identifier for the event (e.g. UUID). Used for idempotency.
 	ID string
 	// ActorID identifies who performed the action (user ID, service account, etc.).

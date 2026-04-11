@@ -1,4 +1,4 @@
-// Package smtp provides an SMTP implementation of ports/email.EmailPort using stdlib net/smtp.
+// Package smtp provides an SMTP implementation of ports/email.Port using stdlib net/smtp.
 package smtp
 
 import (
@@ -15,13 +15,13 @@ import (
 	emailport "github.com/marcusPrado02/go-commons/ports/email"
 )
 
-// Client is an SMTP implementation of EmailPort.
+// Client is an SMTP implementation of Port.
 type Client struct {
 	host     string
 	port     int
 	username string
 	password string
-	from     emailport.EmailAddress
+	from     emailport.Address
 	timeout  time.Duration
 }
 
@@ -34,7 +34,7 @@ func WithTimeout(d time.Duration) Option {
 }
 
 // New creates a new SMTP client.
-func New(host string, port int, username, password string, from emailport.EmailAddress, opts ...Option) *Client {
+func New(host string, port int, username, password string, from emailport.Address, opts ...Option) *Client {
 	c := &Client{host: host, port: port, username: username, password: password, from: from, timeout: 30 * time.Second}
 	for _, o := range opts {
 		o(c)
@@ -43,9 +43,9 @@ func New(host string, port int, username, password string, from emailport.EmailA
 }
 
 // Send delivers an email via SMTP with TLS.
-func (c *Client) Send(ctx context.Context, email emailport.Email) (emailport.EmailReceipt, error) {
+func (c *Client) Send(ctx context.Context, email emailport.Email) (emailport.Receipt, error) {
 	if err := email.Validate(); err != nil {
-		return emailport.EmailReceipt{}, fmt.Errorf("smtp: %w", err)
+		return emailport.Receipt{}, fmt.Errorf("smtp: %w", err)
 	}
 
 	addr := fmt.Sprintf("%s:%d", c.host, c.port)
@@ -58,49 +58,49 @@ func (c *Client) Send(ctx context.Context, email emailport.Email) (emailport.Ema
 
 	msg, err := c.buildMessage(email, tos)
 	if err != nil {
-		return emailport.EmailReceipt{}, fmt.Errorf("smtp: build message failed: %w", err)
+		return emailport.Receipt{}, fmt.Errorf("smtp: build message failed: %w", err)
 	}
 
 	dialer := &net.Dialer{Timeout: c.timeout}
 	conn, err := tls.DialWithDialer(dialer, "tcp", addr, &tls.Config{ServerName: c.host})
 	if err != nil {
-		return emailport.EmailReceipt{}, fmt.Errorf("smtp: dial failed: %w", err)
+		return emailport.Receipt{}, fmt.Errorf("smtp: dial failed: %w", err)
 	}
 
 	client, err := smtp.NewClient(conn, c.host)
 	if err != nil {
 		_ = conn.Close()
-		return emailport.EmailReceipt{}, fmt.Errorf("smtp: client creation failed: %w", err)
+		return emailport.Receipt{}, fmt.Errorf("smtp: client creation failed: %w", err)
 	}
 	defer client.Close()
 
 	if err := client.Auth(auth); err != nil {
-		return emailport.EmailReceipt{}, fmt.Errorf("smtp: auth failed: %w", err)
+		return emailport.Receipt{}, fmt.Errorf("smtp: auth failed: %w", err)
 	}
 	if err := client.Mail(c.from.Value); err != nil {
-		return emailport.EmailReceipt{}, fmt.Errorf("smtp: MAIL FROM failed: %w", err)
+		return emailport.Receipt{}, fmt.Errorf("smtp: MAIL FROM failed: %w", err)
 	}
 	for _, to := range tos {
 		if err := client.Rcpt(to); err != nil {
-			return emailport.EmailReceipt{}, fmt.Errorf("smtp: RCPT TO %q failed: %w", to, err)
+			return emailport.Receipt{}, fmt.Errorf("smtp: RCPT TO %q failed: %w", to, err)
 		}
 	}
 	w, err := client.Data()
 	if err != nil {
-		return emailport.EmailReceipt{}, fmt.Errorf("smtp: DATA failed: %w", err)
+		return emailport.Receipt{}, fmt.Errorf("smtp: DATA failed: %w", err)
 	}
 	if _, err = w.Write(msg); err != nil {
-		return emailport.EmailReceipt{}, fmt.Errorf("smtp: write message failed: %w", err)
+		return emailport.Receipt{}, fmt.Errorf("smtp: write message failed: %w", err)
 	}
 	if err = w.Close(); err != nil {
-		return emailport.EmailReceipt{}, fmt.Errorf("smtp: close DATA failed: %w", err)
+		return emailport.Receipt{}, fmt.Errorf("smtp: close DATA failed: %w", err)
 	}
-	return emailport.EmailReceipt{}, nil
+	return emailport.Receipt{}, nil
 }
 
 // SendWithTemplate is not natively supported by SMTP — render template first, then call Send.
-func (c *Client) SendWithTemplate(_ context.Context, _ emailport.TemplateEmailRequest) (emailport.EmailReceipt, error) {
-	return emailport.EmailReceipt{}, fmt.Errorf("smtp: SendWithTemplate not supported — render template with TemplatePort first, then call Send")
+func (c *Client) SendWithTemplate(_ context.Context, _ emailport.TemplateEmailRequest) (emailport.Receipt, error) {
+	return emailport.Receipt{}, fmt.Errorf("smtp: SendWithTemplate not supported — render template with Port first, then call Send")
 }
 
 // Ping verifies that the SMTP server is reachable by opening a TLS connection.
@@ -150,4 +150,4 @@ func (c *Client) buildMessage(email emailport.Email, tos []string) ([]byte, erro
 	return buf.Bytes(), nil
 }
 
-var _ emailport.EmailPort = (*Client)(nil)
+var _ emailport.Port = (*Client)(nil)

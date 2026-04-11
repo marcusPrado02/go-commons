@@ -1,6 +1,6 @@
 module github.com/marcusPrado02/go-commons/adapters/files/s3
 
-go 1.24
+go 1.25
 
 replace github.com/marcusPrado02/go-commons => ../../..
 

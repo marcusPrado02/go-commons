@@ -16,7 +16,7 @@ import (
 	"github.com/marcusPrado02/go-commons/ports/secrets"
 )
 
-var _ secrets.SecretsPort = (*ssmadapter.Client)(nil)
+var _ secrets.Port = (*ssmadapter.Client)(nil)
 
 // ssmJSONResponse builds an SSM GetParameter JSON response body.
 func ssmJSONResponse(name, value string) []byte {

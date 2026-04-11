@@ -11,10 +11,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// inMemoryStore is a test double for OutboxStore.
+// inMemoryStore is a test double for Store.
 type inMemoryStore struct {
 	mu        sync.Mutex
-	messages  []outbox.OutboxMessage
+	messages  []outbox.Message
 	processed map[string]bool
 }
 
@@ -22,17 +22,17 @@ func newInMemoryStore() *inMemoryStore {
 	return &inMemoryStore{processed: make(map[string]bool)}
 }
 
-func (s *inMemoryStore) Save(_ context.Context, msgs []outbox.OutboxMessage) error {
+func (s *inMemoryStore) Save(_ context.Context, msgs []outbox.Message) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.messages = append(s.messages, msgs...)
 	return nil
 }
 
-func (s *inMemoryStore) FetchPending(_ context.Context, limit int) ([]outbox.OutboxMessage, error) {
+func (s *inMemoryStore) FetchPending(_ context.Context, limit int) ([]outbox.Message, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	var pending []outbox.OutboxMessage
+	var pending []outbox.Message
 	for _, m := range s.messages {
 		if !s.processed[m.ID] {
 			pending = append(pending, m)
@@ -54,10 +54,10 @@ func (s *inMemoryStore) MarkProcessed(_ context.Context, id string) error {
 // inMemoryPublisher records published messages.
 type inMemoryPublisher struct {
 	mu        sync.Mutex
-	published []outbox.OutboxMessage
+	published []outbox.Message
 }
 
-func (p *inMemoryPublisher) Publish(_ context.Context, msg outbox.OutboxMessage) error {
+func (p *inMemoryPublisher) Publish(_ context.Context, msg outbox.Message) error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	p.published = append(p.published, msg)
@@ -65,7 +65,7 @@ func (p *inMemoryPublisher) Publish(_ context.Context, msg outbox.OutboxMessage)
 }
 
 func TestOutboxMessage_IDIsIdempotentKey(t *testing.T) {
-	msg := outbox.OutboxMessage{
+	msg := outbox.Message{
 		ID:          "msg-1",
 		AggregateID: "order-42",
 		EventType:   "OrderPlaced",
@@ -79,7 +79,7 @@ func TestOutboxPublisher_ProcessesPendingMessages(t *testing.T) {
 	store := newInMemoryStore()
 	pub := &inMemoryPublisher{}
 
-	_ = store.Save(context.Background(), []outbox.OutboxMessage{
+	_ = store.Save(context.Background(), []outbox.Message{
 		{ID: "1", EventType: "OrderPlaced", Payload: []byte(`{}`), CreatedAt: time.Now()},
 		{ID: "2", EventType: "OrderShipped", Payload: []byte(`{}`), CreatedAt: time.Now()},
 	})
@@ -105,7 +105,7 @@ func TestOutboxPublisher_ProcessesPendingMessages(t *testing.T) {
 
 func TestOutboxPublisher_MarkProcessed_IsIdempotent(t *testing.T) {
 	store := newInMemoryStore()
-	_ = store.Save(context.Background(), []outbox.OutboxMessage{
+	_ = store.Save(context.Background(), []outbox.Message{
 		{ID: "1", EventType: "E", Payload: []byte(`{}`), CreatedAt: time.Now()},
 	})
 

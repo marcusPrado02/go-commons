@@ -1,6 +1,6 @@
 module github.com/marcusPrado02/go-commons/examples/inmemory-repository
 
-go 1.24
+go 1.25
 
 require (
 	github.com/marcusPrado02/go-commons v0.0.0

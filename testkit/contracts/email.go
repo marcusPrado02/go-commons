@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-// EmailContract is a reusable test suite for EmailPort implementations.
+// EmailContract is a reusable test suite for Port implementations.
 // Embed it in your adapter test and provide a working Port and valid addresses.
 //
 // Example:
@@ -15,24 +15,24 @@ import (
 //	func TestSMTPClient(t *testing.T) {
 //	    suite.Run(t, &contracts.EmailContract{
 //	        Port: mysmtp.NewClient(...),
-//	        From: emailport.EmailAddress{Value: "from@example.com"},
-//	        To:   emailport.EmailAddress{Value: "to@example.com"},
+//	        From: emailport.Address{Value: "from@example.com"},
+//	        To:   emailport.Address{Value: "to@example.com"},
 //	    })
 //	}
 type EmailContract struct {
 	suite.Suite
-	// Port is the EmailPort implementation under test.
-	Port email.EmailPort
+	// Port is the Port implementation under test.
+	Port email.Port
 	// From is the sender address used in test messages.
-	From email.EmailAddress
+	From email.Address
 	// To is the recipient address used in test messages.
-	To email.EmailAddress
+	To email.Address
 }
 
 func (s *EmailContract) TestSend_ValidEmail_ReturnsReceipt() {
 	msg := email.Email{
 		From:    s.From,
-		To:      []email.EmailAddress{s.To},
+		To:      []email.Address{s.To},
 		Subject: "Contract test",
 		Text:    "Hello from the contract suite.",
 	}

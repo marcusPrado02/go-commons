@@ -9,7 +9,7 @@ import (
 )
 
 // Compile-time check that the interface is implementable.
-var _ cache.CachePort = (*nilCache)(nil)
+var _ cache.Port = (*nilCache)(nil)
 
 // nilCache is a no-op implementation used only for compile-time verification.
 type nilCache struct{}
@@ -20,9 +20,9 @@ func (n *nilCache) Delete(_ context.Context, _ string) error                    
 func (n *nilCache) Exists(_ context.Context, _ string) (bool, error)               { return false, nil }
 
 func TestCachePort_ZeroValueIsNil(t *testing.T) {
-	var cp cache.CachePort
+	var cp cache.Port
 	if cp != nil {
-		t.Fatal("expected nil zero value for CachePort interface")
+		t.Fatal("expected nil zero value for Port interface")
 	}
 }
 
@@ -36,9 +36,9 @@ func TestCachePort_TTLZeroMeansNoExpiry(t *testing.T) {
 }
 
 func TestCachePort_InterfaceSignature(t *testing.T) {
-	// Verify that all four methods of CachePort are present and callable
+	// Verify that all four methods of Port are present and callable
 	// by assigning a concrete implementation.
-	var cp cache.CachePort = &nilCache{}
+	var cp cache.Port = &nilCache{}
 	ctx := context.Background()
 
 	if _, _, err := cp.Get(ctx, "k"); err != nil {

@@ -21,6 +21,8 @@ func Ok[T any](value T) Result[T] {
 }
 
 // Fail creates a failed Result holding the given Problem.
+//
+//nolint:gocritic // hugeParam: Problem is a value type by design; changing to pointer would alter the call-site API.
 func Fail[T any](problem kerrors.Problem) Result[T] {
 	return Result[T]{problem: &problem}
 }

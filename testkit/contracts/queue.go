@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-// QueueContract is a reusable test suite for QueuePort implementations.
+// QueueContract is a reusable test suite for Port implementations.
 //
 // Example:
 //
@@ -18,8 +18,8 @@ import (
 //	}
 type QueueContract struct {
 	suite.Suite
-	// Queue is the QueuePort implementation under test.
-	Queue queue.QueuePort
+	// Queue is the Port implementation under test.
+	Queue queue.Port
 }
 
 func (s *QueueContract) TestPublish_NoError() {

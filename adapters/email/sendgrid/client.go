@@ -1,4 +1,4 @@
-// Package sendgrid provides a SendGrid implementation of ports/email.EmailPort.
+// Package sendgrid provides a SendGrid implementation of ports/email.Port.
 package sendgrid
 
 import (
@@ -34,10 +34,10 @@ type retryableError struct{ cause error }
 func (e *retryableError) Error() string { return e.cause.Error() }
 func (e *retryableError) Unwrap() error { return e.cause }
 
-// Client is a SendGrid implementation of EmailPort.
+// Client is a SendGrid implementation of Port.
 type Client struct {
 	apiKey  string
-	from    emailport.EmailAddress
+	from    emailport.Address
 	baseURL string
 	http    *http.Client
 	retry   *RetryConfig
@@ -68,7 +68,7 @@ func WithRetry(cfg RetryConfig) Option {
 }
 
 // New creates a new SendGrid client.
-func New(apiKey string, from emailport.EmailAddress, opts ...Option) (*Client, error) {
+func New(apiKey string, from emailport.Address, opts ...Option) (*Client, error) {
 	if apiKey == "" {
 		return nil, fmt.Errorf("sendgrid: apiKey cannot be empty")
 	}
@@ -86,17 +86,17 @@ func New(apiKey string, from emailport.EmailAddress, opts ...Option) (*Client, e
 
 // Send delivers an email via the SendGrid v3 Mail Send API.
 // Retries on 429 and 5xx if WithRetry is configured.
-func (c *Client) Send(ctx context.Context, email emailport.Email) (emailport.EmailReceipt, error) {
+func (c *Client) Send(ctx context.Context, email emailport.Email) (emailport.Receipt, error) {
 	if err := email.Validate(); err != nil {
-		return emailport.EmailReceipt{}, fmt.Errorf("sendgrid: invalid email: %w", err)
+		return emailport.Receipt{}, fmt.Errorf("sendgrid: invalid email: %w", err)
 	}
 
 	body, err := c.buildPayload(email)
 	if err != nil {
-		return emailport.EmailReceipt{}, fmt.Errorf("sendgrid: failed to build payload: %w", err)
+		return emailport.Receipt{}, fmt.Errorf("sendgrid: failed to build payload: %w", err)
 	}
 
-	var receipt emailport.EmailReceipt
+	var receipt emailport.Receipt
 	action := func(ctx context.Context) error {
 		req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.baseURL+"/v3/mail/send", bytes.NewReader(body))
 		if err != nil {
@@ -116,19 +116,19 @@ func (c *Client) Send(ctx context.Context, email emailport.Email) (emailport.Ema
 		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 			return fmt.Errorf("sendgrid: unexpected status %d", resp.StatusCode)
 		}
-		receipt = emailport.EmailReceipt{MessageID: resp.Header.Get("X-Message-Id")}
+		receipt = emailport.Receipt{MessageID: resp.Header.Get("X-Message-Id")}
 		return nil
 	}
 
 	if err := c.runWithRetry(ctx, action); err != nil {
-		return emailport.EmailReceipt{}, err
+		return emailport.Receipt{}, err
 	}
 	return receipt, nil
 }
 
 // SendWithTemplate delivers a template-based email via the SendGrid v3 API.
 // Retries on 429 and 5xx if WithRetry is configured.
-func (c *Client) SendWithTemplate(ctx context.Context, req emailport.TemplateEmailRequest) (emailport.EmailReceipt, error) {
+func (c *Client) SendWithTemplate(ctx context.Context, req emailport.TemplateEmailRequest) (emailport.Receipt, error) {
 	tos := make([]map[string]string, len(req.To))
 	for i, t := range req.To {
 		tos[i] = map[string]string{"email": t.Value}
@@ -141,7 +141,7 @@ func (c *Client) SendWithTemplate(ctx context.Context, req emailport.TemplateEma
 	}
 	body, _ := json.Marshal(payload)
 
-	var receipt emailport.EmailReceipt
+	var receipt emailport.Receipt
 	action := func(ctx context.Context) error {
 		httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, c.baseURL+"/v3/mail/send", bytes.NewReader(body))
 		if err != nil {
@@ -161,12 +161,12 @@ func (c *Client) SendWithTemplate(ctx context.Context, req emailport.TemplateEma
 		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 			return fmt.Errorf("sendgrid: unexpected status %d", resp.StatusCode)
 		}
-		receipt = emailport.EmailReceipt{MessageID: resp.Header.Get("X-Message-Id")}
+		receipt = emailport.Receipt{MessageID: resp.Header.Get("X-Message-Id")}
 		return nil
 	}
 
 	if err := c.runWithRetry(ctx, action); err != nil {
-		return emailport.EmailReceipt{}, err
+		return emailport.Receipt{}, err
 	}
 	return receipt, nil
 }
@@ -269,4 +269,4 @@ func (c *Client) buildPayload(email emailport.Email) ([]byte, error) {
 	return json.Marshal(payload)
 }
 
-var _ emailport.EmailPort = (*Client)(nil)
+var _ emailport.Port = (*Client)(nil)

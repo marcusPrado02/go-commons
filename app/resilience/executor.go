@@ -1,5 +1,5 @@
 // Package resilience provides retry and circuit breaker capabilities.
-// Use ResilienceExecutor.Run for void operations and Supply[T] for operations that return a value.
+// Use Executor.Run for void operations and Supply[T] for operations that return a value.
 package resilience
 
 import (
@@ -13,8 +13,8 @@ import (
 	obs "github.com/marcusPrado02/go-commons/ports/observability"
 )
 
-// ResiliencePolicySet configures the retry and circuit breaker behavior.
-type ResiliencePolicySet struct {
+// PolicySet configures the retry and circuit breaker behavior.
+type PolicySet struct {
 	// RetryAttempts is the number of retries after the initial attempt (0 = no retries).
 	RetryAttempts int
 	// RetryDelay is the base delay before the first retry.
@@ -39,12 +39,12 @@ type CircuitBreakerConfig struct {
 	FailureThreshold float64
 }
 
-// ResilienceExecutor executes actions with retry and circuit breaker policies applied.
-type ResilienceExecutor interface {
-	Run(ctx context.Context, name string, policies ResiliencePolicySet, action func(ctx context.Context) error) error
+// Executor executes actions with retry and circuit breaker policies applied.
+type Executor interface {
+	Run(ctx context.Context, name string, policies PolicySet, action func(ctx context.Context) error) error
 }
 
-// ExecutorOption configures a ResilienceExecutor.
+// ExecutorOption configures a Executor.
 type ExecutorOption func(*defaultExecutor)
 
 // WithLogger sets a structured logger for retry attempts and circuit breaker events.
@@ -56,8 +56,8 @@ type defaultExecutor struct {
 	logger obs.Logger
 }
 
-// NewExecutor creates a new ResilienceExecutor.
-func NewExecutor(opts ...ExecutorOption) ResilienceExecutor {
+// NewExecutor creates a new Executor.
+func NewExecutor(opts ...ExecutorOption) Executor {
 	e := &defaultExecutor{}
 	for _, opt := range opts {
 		opt(e)
@@ -65,8 +65,8 @@ func NewExecutor(opts ...ExecutorOption) ResilienceExecutor {
 	return e
 }
 
-// ValidatePolicies returns an error if the ResiliencePolicySet has invalid configuration.
-func ValidatePolicies(p ResiliencePolicySet) error {
+// ValidatePolicies returns an error if the PolicySet has invalid configuration.
+func ValidatePolicies(p PolicySet) error {
 	if p.RetryAttempts < 0 {
 		return fmt.Errorf("resilience: RetryAttempts must be >= 0, got %d", p.RetryAttempts)
 	}
@@ -84,7 +84,7 @@ func ValidatePolicies(p ResiliencePolicySet) error {
 	return nil
 }
 
-func (e *defaultExecutor) Run(ctx context.Context, name string, policies ResiliencePolicySet, action func(ctx context.Context) error) error {
+func (e *defaultExecutor) Run(ctx context.Context, name string, policies PolicySet, action func(ctx context.Context) error) error {
 	if err := ValidatePolicies(policies); err != nil {
 		return err
 	}
@@ -107,13 +107,13 @@ func (e *defaultExecutor) Run(ctx context.Context, name string, policies Resilie
 		}
 
 		attemptCtx := ctx
+		cancelAttempt := func() {}
 		if policies.TimeoutDuration > 0 {
-			var cancel context.CancelFunc
-			attemptCtx, cancel = context.WithTimeout(ctx, policies.TimeoutDuration)
-			defer cancel()
+			attemptCtx, cancelAttempt = context.WithTimeout(ctx, policies.TimeoutDuration)
 		}
-
-		if lastErr = run(attemptCtx); lastErr == nil {
+		lastErr = run(attemptCtx)
+		cancelAttempt()
+		if lastErr == nil {
 			return nil
 		}
 
@@ -146,12 +146,12 @@ func jitterDelay(attempt int, base, maxDelay time.Duration) time.Duration {
 		return 0
 	}
 	exp := time.Duration(math.Pow(2, float64(attempt))) * base
-	cap := exp
+	window := exp
 	if maxDelay > 0 && exp > maxDelay {
-		cap = maxDelay
+		window = maxDelay
 	}
 	//nolint:gosec // math/rand is fine for jitter — not a security-sensitive operation
-	return time.Duration(rand.Int63n(int64(cap) + 1))
+	return time.Duration(rand.Int63n(int64(window) + 1))
 }
 
 func newCircuitBreaker(name string, cfg *CircuitBreakerConfig) *gobreaker.CircuitBreaker {
@@ -172,7 +172,7 @@ func newCircuitBreaker(name string, cfg *CircuitBreakerConfig) *gobreaker.Circui
 
 // Supply executes an action that returns a value with retry and circuit breaker policies.
 // It avoids the closure-plus-variable pattern that would be needed otherwise.
-func Supply[T any](ctx context.Context, exec ResilienceExecutor, name string, policies ResiliencePolicySet, action func(ctx context.Context) (T, error)) (T, error) {
+func Supply[T any](ctx context.Context, exec Executor, name string, policies PolicySet, action func(ctx context.Context) (T, error)) (T, error) {
 	var result T
 	err := exec.Run(ctx, name, policies, func(ctx context.Context) error {
 		var err error

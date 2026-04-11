@@ -1,4 +1,4 @@
-// Package awsssm provides a SecretsPort implementation backed by AWS SSM Parameter Store.
+// Package awsssm provides a Port implementation backed by AWS SSM Parameter Store.
 package awsssm
 
 import (
@@ -11,7 +11,7 @@ import (
 	"github.com/marcusPrado02/go-commons/ports/secrets"
 )
 
-// Client implements secrets.SecretsPort using AWS SSM Parameter Store.
+// Client implements secrets.Port using AWS SSM Parameter Store.
 // Parameters are fetched with decryption enabled (WithDecryption: true), so both
 // String and SecureString parameter types are supported transparently.
 type Client struct {
@@ -47,4 +47,4 @@ func (c *Client) GetJSON(ctx context.Context, key string, dest any) error {
 	return secrets.ParseJSON(value, dest)
 }
 
-var _ secrets.SecretsPort = (*Client)(nil)
+var _ secrets.Port = (*Client)(nil)

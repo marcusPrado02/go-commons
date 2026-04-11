@@ -1,4 +1,4 @@
-// Package vault provides a SecretsPort implementation backed by HashiCorp Vault's KV v2 API.
+// Package vault provides a Port implementation backed by HashiCorp Vault's KV v2 API.
 // Authentication is handled externally: callers are responsible for obtaining a Vault
 // token and renewing it as needed. This keeps the adapter simple and auth-method-agnostic.
 package vault
@@ -17,7 +17,7 @@ import (
 
 const defaultTimeout = 10 * time.Second
 
-// Client implements secrets.SecretsPort using HashiCorp Vault's KV v2 HTTP API.
+// Client implements secrets.Port using HashiCorp Vault's KV v2 HTTP API.
 type Client struct {
 	baseURL string
 	token   string
@@ -133,4 +133,4 @@ func (c *Client) readSecret(ctx context.Context, key string) (map[string]any, er
 	return envelope.Data.Data, nil
 }
 
-var _ secrets.SecretsPort = (*Client)(nil)
+var _ secrets.Port = (*Client)(nil)

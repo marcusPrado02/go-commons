@@ -32,7 +32,7 @@ func TestClient_Send_Success(t *testing.T) {
 	to, _ := emailport.NewEmailAddress("recipient@example.com")
 	receipt, err := client.Send(context.Background(), emailport.Email{
 		From:    from,
-		To:      []emailport.EmailAddress{to},
+		To:      []emailport.Address{to},
 		Subject: "Hello",
 		HTML:    "<p>Hi</p>",
 	})
@@ -68,4 +68,4 @@ func TestClient_Ping_Success(t *testing.T) {
 }
 
 // Compile-time interface check
-var _ emailport.EmailPort = (*sendgrid.Client)(nil)
+var _ emailport.Port = (*sendgrid.Client)(nil)

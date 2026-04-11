@@ -1,4 +1,4 @@
-// Package fcm provides a PushPort implementation backed by Firebase Cloud Messaging.
+// Package fcm provides a Port implementation backed by Firebase Cloud Messaging.
 package fcm
 
 import (
@@ -12,7 +12,7 @@ import (
 	"github.com/marcusPrado02/go-commons/ports/push"
 )
 
-// Client implements push.PushPort using Firebase Cloud Messaging.
+// Client implements push.Port using Firebase Cloud Messaging.
 type Client struct {
 	msg *messaging.Client
 }
@@ -48,17 +48,17 @@ func newFromApp(ctx context.Context, app *firebase.App) (*Client, error) {
 // Send delivers a push notification via FCM.
 // If notification.Token is set, the message is sent to a single device.
 // If notification.Topic is set and Token is empty, the message is sent to the topic.
-func (c *Client) Send(ctx context.Context, notification push.PushNotification) (push.PushReceipt, error) {
+func (c *Client) Send(ctx context.Context, notification push.Notification) (push.Receipt, error) {
 	msg, err := buildMessage(notification)
 	if err != nil {
-		return push.PushReceipt{}, err
+		return push.Receipt{}, err
 	}
 
 	msgID, err := c.msg.Send(ctx, msg)
 	if err != nil {
-		return push.PushReceipt{}, fmt.Errorf("fcm: send: %w", err)
+		return push.Receipt{}, fmt.Errorf("fcm: send: %w", err)
 	}
-	return push.PushReceipt{MessageID: msgID}, nil
+	return push.Receipt{MessageID: msgID}, nil
 }
 
 // Ping verifies FCM credentials are valid by performing a dry-run send.
@@ -79,7 +79,7 @@ func (c *Client) Ping(ctx context.Context) error {
 	return nil
 }
 
-func buildMessage(n push.PushNotification) (*messaging.Message, error) {
+func buildMessage(n push.Notification) (*messaging.Message, error) {
 	if n.Token == "" && n.Topic == "" {
 		return nil, fmt.Errorf("fcm: notification must have a Token or a Topic")
 	}
@@ -112,4 +112,4 @@ func isAuthError(err error) bool {
 	return false
 }
 
-var _ push.PushPort = (*Client)(nil)
+var _ push.Port = (*Client)(nil)

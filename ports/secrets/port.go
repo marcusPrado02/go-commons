@@ -6,8 +6,8 @@ import (
 	"encoding/json"
 )
 
-// SecretsPort retrieves secrets from a secure store (e.g. AWS Secrets Manager, Vault).
-type SecretsPort interface {
+// Port retrieves secrets from a secure store (e.g. AWS Secrets Manager, Vault).
+type Port interface {
 	// Get retrieves the secret value for the given key.
 	Get(ctx context.Context, key string) (string, error)
 	// GetJSON retrieves a JSON-encoded secret and unmarshals it into dest.

@@ -49,7 +49,7 @@ func TestSendWithTemplate_ReturnsUnsupportedError(t *testing.T) {
 
 	_, err := c.SendWithTemplate(context.Background(), emailport.TemplateEmailRequest{
 		From: from,
-		To:   []emailport.EmailAddress{to},
+		To:   []emailport.Address{to},
 	})
 	if err == nil {
 		t.Fatal("expected unsupported error from SendWithTemplate")

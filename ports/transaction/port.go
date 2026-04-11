@@ -3,9 +3,9 @@ package transaction
 
 import "context"
 
-// TransactionManager provides database-agnostic transaction management.
+// Manager provides database-agnostic transaction management.
 // Implementations wrap the underlying database/ORM transaction primitives.
-type TransactionManager interface {
+type Manager interface {
 	// Begin starts a new transaction and returns a derived context that carries it.
 	Begin(ctx context.Context) (context.Context, error)
 	// Commit commits the transaction stored in ctx.

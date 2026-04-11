@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-// SMSContract is a reusable test suite for SMSPort implementations.
+// SMSContract is a reusable test suite for Port implementations.
 //
 // Example:
 //
@@ -19,8 +19,8 @@ import (
 //	}
 type SMSContract struct {
 	suite.Suite
-	// Port is the SMSPort implementation under test.
-	Port sms.SMSPort
+	// Port is the Port implementation under test.
+	Port sms.Port
 	// To is a valid E.164 phone number used in test sends.
 	To string
 }

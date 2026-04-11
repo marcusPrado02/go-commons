@@ -14,7 +14,7 @@ import (
 )
 
 // newTestClient sets up a SES client pointed at the given httptest server.
-func newTestClient(srv *httptest.Server, from emailport.EmailAddress) *ses.Client {
+func newTestClient(srv *httptest.Server, from emailport.Address) *ses.Client {
 	cfg := aws.Config{
 		Region:      "us-east-1",
 		Credentials: aws.AnonymousCredentials{},
@@ -43,7 +43,7 @@ func TestSend_ValidEmail_ReturnsReceipt(t *testing.T) {
 	client := newTestClient(srv, from)
 	email := emailport.Email{
 		From:    from,
-		To:      []emailport.EmailAddress{to},
+		To:      []emailport.Address{to},
 		Subject: "Test",
 		Text:    "hello",
 	}
@@ -80,7 +80,7 @@ func TestSendWithTemplate_ReturnsStructuredError(t *testing.T) {
 	client := newTestClient(srv, from)
 	_, err := client.SendWithTemplate(context.Background(), emailport.TemplateEmailRequest{
 		From:         from,
-		To:           []emailport.EmailAddress{to},
+		To:           []emailport.Address{to},
 		TemplateName: "welcome",
 	})
 	if err == nil {

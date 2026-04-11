@@ -1,4 +1,4 @@
-// Package rabbitmq provides a QueuePort implementation backed by RabbitMQ via amqp091-go.
+// Package rabbitmq provides a Port implementation backed by RabbitMQ via amqp091-go.
 package rabbitmq
 
 import (
@@ -11,7 +11,7 @@ import (
 	"github.com/marcusPrado02/go-commons/ports/queue"
 )
 
-// Client implements queue.QueuePort using RabbitMQ.
+// Client implements queue.Port using RabbitMQ.
 //
 // Topics map to AMQP queue names. Publish uses the default exchange ("") with
 // the topic as the routing key, which delivers directly to the named queue.
@@ -146,4 +146,4 @@ func toQueueMessage(d amqp.Delivery) queue.Message {
 	}
 }
 
-var _ queue.QueuePort = (*Client)(nil)
+var _ queue.Port = (*Client)(nil)

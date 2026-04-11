@@ -19,7 +19,7 @@ func TestAssertAggregate_HappyPath(t *testing.T) {
 	o := order{AggregateRoot: ddd.NewAggregateRoot("order-1")}
 	o.RegisterEvent(orderPlaced{occurredAt: time.Now()})
 
-	assert.AssertAggregate(t, &o).
+	assert.Aggregate(t, &o).
 		HasDomainEvents(1).
 		HasEventOfType("OrderPlaced").
 		FirstEventSatisfies(func(e ddd.DomainEvent) bool {
@@ -29,5 +29,5 @@ func TestAssertAggregate_HappyPath(t *testing.T) {
 
 func TestAssertAggregate_NoEvents(t *testing.T) {
 	o := order{AggregateRoot: ddd.NewAggregateRoot("order-1")}
-	assert.AssertAggregate(t, &o).HasNoDomainEvents()
+	assert.Aggregate(t, &o).HasNoDomainEvents()
 }

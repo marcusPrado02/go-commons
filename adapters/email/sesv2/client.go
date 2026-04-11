@@ -1,4 +1,4 @@
-// Package sesv2 provides an AWS SES v2 implementation of ports/email.EmailPort.
+// Package sesv2 provides an AWS SES v2 implementation of ports/email.Port.
 // Unlike adapters/email/ses (SES v1), this adapter fully supports SendWithTemplate.
 package sesv2
 
@@ -14,26 +14,26 @@ import (
 	emailport "github.com/marcusPrado02/go-commons/ports/email"
 )
 
-// Client is an AWS SES v2 implementation of EmailPort.
+// Client is an AWS SES v2 implementation of Port.
 type Client struct {
 	ses  *awssesv2.Client
-	from emailport.EmailAddress
+	from emailport.Address
 }
 
 // New creates a Client from an existing aws.Config and a default From address.
-func New(cfg aws.Config, from emailport.EmailAddress) *Client {
+func New(cfg aws.Config, from emailport.Address) *Client {
 	return &Client{ses: awssesv2.NewFromConfig(cfg), from: from}
 }
 
 // NewWithOptions creates a Client with additional SES v2 options (e.g. a custom endpoint for tests).
-func NewWithOptions(cfg aws.Config, from emailport.EmailAddress, opts ...func(*awssesv2.Options)) *Client {
+func NewWithOptions(cfg aws.Config, from emailport.Address, opts ...func(*awssesv2.Options)) *Client {
 	return &Client{ses: awssesv2.NewFromConfig(cfg, opts...), from: from}
 }
 
 // Send delivers an email via AWS SES v2.
-func (c *Client) Send(ctx context.Context, email emailport.Email) (emailport.EmailReceipt, error) {
+func (c *Client) Send(ctx context.Context, email emailport.Email) (emailport.Receipt, error) {
 	if err := email.Validate(); err != nil {
-		return emailport.EmailReceipt{}, fmt.Errorf("sesv2: %w", err)
+		return emailport.Receipt{}, fmt.Errorf("sesv2: %w", err)
 	}
 
 	dest := buildDestination(email)
@@ -50,22 +50,22 @@ func (c *Client) Send(ctx context.Context, email emailport.Email) (emailport.Ema
 		Content:          content,
 	})
 	if err != nil {
-		return emailport.EmailReceipt{}, fmt.Errorf("sesv2: send: %w", err)
+		return emailport.Receipt{}, fmt.Errorf("sesv2: send: %w", err)
 	}
-	return emailport.EmailReceipt{MessageID: aws.ToString(out.MessageId)}, nil
+	return emailport.Receipt{MessageID: aws.ToString(out.MessageId)}, nil
 }
 
 // SendWithTemplate delivers an email using a SES v2 template.
 // Variables in req.Variables are serialised as a JSON object and passed as
 // TemplateData (SES v2 uses Handlebars-style {{variable}} substitution).
-func (c *Client) SendWithTemplate(ctx context.Context, req emailport.TemplateEmailRequest) (emailport.EmailReceipt, error) {
+func (c *Client) SendWithTemplate(ctx context.Context, req emailport.TemplateEmailRequest) (emailport.Receipt, error) {
 	if len(req.To) == 0 {
-		return emailport.EmailReceipt{}, fmt.Errorf("sesv2: SendWithTemplate requires at least one recipient")
+		return emailport.Receipt{}, fmt.Errorf("sesv2: SendWithTemplate requires at least one recipient")
 	}
 
 	templateData, err := json.Marshal(req.Variables)
 	if err != nil {
-		return emailport.EmailReceipt{}, fmt.Errorf("sesv2: marshal template variables: %w", err)
+		return emailport.Receipt{}, fmt.Errorf("sesv2: marshal template variables: %w", err)
 	}
 
 	tos := make([]string, len(req.To))
@@ -89,9 +89,9 @@ func (c *Client) SendWithTemplate(ctx context.Context, req emailport.TemplateEma
 		},
 	})
 	if err != nil {
-		return emailport.EmailReceipt{}, fmt.Errorf("sesv2: send with template %q: %w", req.TemplateName, err)
+		return emailport.Receipt{}, fmt.Errorf("sesv2: send with template %q: %w", req.TemplateName, err)
 	}
-	return emailport.EmailReceipt{MessageID: aws.ToString(out.MessageId)}, nil
+	return emailport.Receipt{MessageID: aws.ToString(out.MessageId)}, nil
 }
 
 // Ping verifies SES v2 connectivity by listing contact lists (lightweight read-only call).
@@ -130,4 +130,4 @@ func buildBody(email emailport.Email) *types.Body {
 	return body
 }
 
-var _ emailport.EmailPort = (*Client)(nil)
+var _ emailport.Port = (*Client)(nil)

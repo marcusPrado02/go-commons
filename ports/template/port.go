@@ -3,23 +3,23 @@ package template
 
 import "context"
 
-// TemplatePort renders named templates with provided data.
-type TemplatePort interface {
+// Port renders named templates with provided data.
+type Port interface {
 	// Render executes the named template with the given data map.
-	Render(ctx context.Context, name string, data map[string]any) (TemplateResult, error)
+	Render(ctx context.Context, name string, data map[string]any) (Result, error)
 	// Exists reports whether a template with the given name is registered.
 	Exists(ctx context.Context, name string) (bool, error)
 }
 
-// Content type constants for use in TemplateResult.
+// Content type constants for use in Result.
 const (
 	ContentTypeHTML = "text/html"
 	ContentTypeText = "text/plain"
 	ContentTypeXML  = "application/xml"
 )
 
-// TemplateResult holds the output of a rendered template.
-type TemplateResult struct {
+// Result holds the output of a rendered template.
+type Result struct {
 	TemplateName string
 	Content      string
 	// ContentType should be one of the ContentType* constants.
@@ -27,23 +27,23 @@ type TemplateResult struct {
 	Charset     string
 }
 
-// HTMLResult constructs a TemplateResult with HTML content type.
-func HTMLResult(name, content string) TemplateResult {
-	return TemplateResult{TemplateName: name, Content: content, ContentType: ContentTypeHTML, Charset: "UTF-8"}
+// HTMLResult constructs a Result with HTML content type.
+func HTMLResult(name, content string) Result {
+	return Result{TemplateName: name, Content: content, ContentType: ContentTypeHTML, Charset: "UTF-8"}
 }
 
-// TextResult constructs a TemplateResult with plain-text content type.
-func TextResult(name, content string) TemplateResult {
-	return TemplateResult{TemplateName: name, Content: content, ContentType: ContentTypeText, Charset: "UTF-8"}
+// TextResult constructs a Result with plain-text content type.
+func TextResult(name, content string) Result {
+	return Result{TemplateName: name, Content: content, ContentType: ContentTypeText, Charset: "UTF-8"}
 }
 
-// XMLResult constructs a TemplateResult with XML content type.
-func XMLResult(name, content string) TemplateResult {
-	return TemplateResult{TemplateName: name, Content: content, ContentType: ContentTypeXML, Charset: "UTF-8"}
+// XMLResult constructs a Result with XML content type.
+func XMLResult(name, content string) Result {
+	return Result{TemplateName: name, Content: content, ContentType: ContentTypeXML, Charset: "UTF-8"}
 }
 
 // Bytes returns the Content as a UTF-8 byte slice.
-func (t TemplateResult) Bytes() []byte { return []byte(t.Content) }
+func (t Result) Bytes() []byte { return []byte(t.Content) }
 
 // IsEmpty returns true if the Content is empty.
-func (t TemplateResult) IsEmpty() bool { return t.Content == "" }
+func (t Result) IsEmpty() bool { return t.Content == "" }

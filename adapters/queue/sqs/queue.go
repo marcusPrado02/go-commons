@@ -1,4 +1,4 @@
-// Package sqs provides a QueuePort implementation backed by AWS SQS.
+// Package sqs provides a Port implementation backed by AWS SQS.
 package sqs
 
 import (
@@ -17,7 +17,7 @@ const (
 	defaultWaitSeconds = 20 // long-polling
 )
 
-// Client implements queue.QueuePort using AWS SQS.
+// Client implements queue.Port using AWS SQS.
 // Topic names are used as SQS queue URLs directly.
 type Client struct {
 	sqs *awssqs.Client
@@ -124,4 +124,4 @@ func toQueueMessage(m types.Message) queue.Message {
 func strPtr(s string) *string     { return &s }
 func int32Ptr(n int32) *int32     { return &n }
 
-var _ queue.QueuePort = (*Client)(nil)
+var _ queue.Port = (*Client)(nil)

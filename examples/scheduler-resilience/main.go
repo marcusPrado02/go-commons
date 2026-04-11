@@ -2,7 +2,7 @@
 //
 // This example demonstrates:
 //   - Registering cron jobs with the Scheduler
-//   - Wrapping a flaky external call with ResilienceExecutor (retry + circuit breaker)
+//   - Wrapping a flaky external call with Executor (retry + circuit breaker)
 //   - Using WithLogger for structured job lifecycle logging
 //
 // Run: go run ./examples/scheduler-resilience/
@@ -66,8 +66,8 @@ func flakyExternalCall(ctx context.Context) error {
 
 // SyncJob calls a flaky external service with retry + circuit breaker.
 type SyncJob struct {
-	exec     resilience.ResilienceExecutor
-	policies resilience.ResiliencePolicySet
+	exec     resilience.Executor
+	policies resilience.PolicySet
 }
 
 func (j *SyncJob) Name() string { return "external-sync" }
@@ -94,7 +94,7 @@ func main() {
 	logger := &slogLogger{slog.New(slog.NewTextHandler(os.Stdout, nil))}
 
 	exec := resilience.NewExecutor(resilience.WithLogger(logger))
-	policies := resilience.ResiliencePolicySet{
+	policies := resilience.PolicySet{
 		RetryAttempts:   4,
 		RetryDelay:      50 * time.Millisecond,
 		RetryMaxDelay:   500 * time.Millisecond,

@@ -1,4 +1,4 @@
-// Package twilio provides a Twilio implementation of ports/sms.SMSPort.
+// Package twilio provides a Twilio implementation of ports/sms.Port.
 package twilio
 
 import (
@@ -12,7 +12,7 @@ import (
 	openapi "github.com/twilio/twilio-go/rest/api/v2010"
 )
 
-// Client is a Twilio implementation of SMSPort.
+// Client is a Twilio implementation of Port.
 type Client struct {
 	twilio     *twilioapi.RestClient
 	from       string
@@ -49,7 +49,7 @@ func New(accountSID, authToken, fromNumber string, opts ...Option) (*Client, err
 }
 
 // Send delivers an SMS message to the given E.164 phone number.
-func (c *Client) Send(_ context.Context, to, body string) (sms.SMSReceipt, error) {
+func (c *Client) Send(_ context.Context, to, body string) (sms.Receipt, error) {
 	params := &openapi.CreateMessageParams{}
 	params.SetTo(to)
 	params.SetFrom(c.from)
@@ -57,12 +57,12 @@ func (c *Client) Send(_ context.Context, to, body string) (sms.SMSReceipt, error
 
 	msg, err := c.twilio.Api.CreateMessage(params)
 	if err != nil {
-		return sms.SMSReceipt{}, fmt.Errorf("twilio: send failed: %w", err)
+		return sms.Receipt{}, fmt.Errorf("twilio: send failed: %w", err)
 	}
 	if msg.Sid == nil {
-		return sms.SMSReceipt{}, fmt.Errorf("twilio: no message SID returned")
+		return sms.Receipt{}, fmt.Errorf("twilio: no message SID returned")
 	}
-	return sms.SMSReceipt{MessageID: *msg.Sid}, nil
+	return sms.Receipt{MessageID: *msg.Sid}, nil
 }
 
 // Ping verifies Twilio credentials by fetching the account.
@@ -74,4 +74,4 @@ func (c *Client) Ping(_ context.Context) error {
 	return nil
 }
 
-var _ sms.SMSPort = (*Client)(nil)
+var _ sms.Port = (*Client)(nil)

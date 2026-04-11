@@ -1,4 +1,4 @@
-// Package redis provides a CachePort implementation backed by Redis via go-redis/v9.
+// Package redis provides a Port implementation backed by Redis via go-redis/v9.
 package redis
 
 import (
@@ -13,7 +13,7 @@ import (
 	"github.com/marcusPrado02/go-commons/ports/cache"
 )
 
-// Cache implements cache.CachePort using a Redis backend.
+// Cache implements cache.Port using a Redis backend.
 // Values are serialised to JSON strings, so any JSON-marshallable type is supported.
 type Cache struct {
 	client *goredis.Client
@@ -97,4 +97,4 @@ func (c *Cache) Exists(ctx context.Context, key string) (bool, error) {
 // Close releases the Redis connection pool.
 func (c *Cache) Close() error { return c.client.Close() }
 
-var _ cache.CachePort = (*Cache)(nil)
+var _ cache.Port = (*Cache)(nil)

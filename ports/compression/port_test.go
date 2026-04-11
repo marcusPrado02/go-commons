@@ -9,8 +9,8 @@ import (
 	"github.com/marcusPrado02/go-commons/ports/compression"
 )
 
-// Compile-time check that CompressionPort can be implemented.
-var _ compression.CompressionPort = (*nilCompression)(nil)
+// Compile-time check that Port can be implemented.
+var _ compression.Port = (*nilCompression)(nil)
 
 type nilCompression struct{}
 
@@ -41,7 +41,7 @@ func TestFormat_Constants(t *testing.T) {
 }
 
 func TestCompressionPort_InterfaceSignature(t *testing.T) {
-	var cp compression.CompressionPort = &nilCompression{}
+	var cp compression.Port = &nilCompression{}
 	ctx := context.Background()
 	src := strings.NewReader("hello")
 

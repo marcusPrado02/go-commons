@@ -7,8 +7,8 @@ import (
 	"github.com/marcusPrado02/go-commons/ports/queue"
 )
 
-// Compile-time check that QueuePort can be implemented.
-var _ queue.QueuePort = (*nilQueue)(nil)
+// Compile-time check that Port can be implemented.
+var _ queue.Port = (*nilQueue)(nil)
 
 type nilQueue struct{}
 

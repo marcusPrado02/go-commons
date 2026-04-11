@@ -1,4 +1,4 @@
-// Package stdlib provides a CompressionPort implementation using Go standard library.
+// Package stdlib provides a Port implementation using Go standard library.
 // Supports gzip and flate (deflate). No external dependencies.
 package stdlib
 
@@ -13,7 +13,7 @@ import (
 	"github.com/marcusPrado02/go-commons/ports/compression"
 )
 
-// Compressor is a stdlib implementation of compression.CompressionPort.
+// Compressor is a stdlib implementation of compression.Port.
 // Supports gzip and zstd (via flate as a substitute) formats.
 // For production use of snappy or zstd, use a dedicated adapter.
 type Compressor struct{}
@@ -89,4 +89,4 @@ func (c *Compressor) Decompress(_ context.Context, src io.Reader, format compres
 	}
 }
 
-var _ compression.CompressionPort = (*Compressor)(nil)
+var _ compression.Port = (*Compressor)(nil)

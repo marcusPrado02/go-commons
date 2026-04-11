@@ -3,16 +3,16 @@ package push
 
 import "context"
 
-// PushPort delivers push notifications to mobile devices or browsers.
-type PushPort interface {
+// Port delivers push notifications to mobile devices or browsers.
+type Port interface {
 	// Send delivers a push notification.
-	Send(ctx context.Context, notification PushNotification) (PushReceipt, error)
+	Send(ctx context.Context, notification Notification) (Receipt, error)
 	// Ping verifies connectivity and credential validity.
 	Ping(ctx context.Context) error
 }
 
-// PushNotification describes a push message to be delivered.
-type PushNotification struct {
+// Notification describes a push message to be delivered.
+type Notification struct {
 	// Token is the device/browser registration token.
 	Token string
 	Title string
@@ -22,7 +22,7 @@ type PushNotification struct {
 	Topic string
 }
 
-// PushReceipt is returned after successful delivery.
-type PushReceipt struct {
+// Receipt is returned after successful delivery.
+type Receipt struct {
 	MessageID string
 }

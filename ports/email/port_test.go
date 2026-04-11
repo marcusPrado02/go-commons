@@ -28,7 +28,7 @@ func TestNewEmailAddress_invalid(t *testing.T) {
 func TestEmail_Validate_valid(t *testing.T) {
 	from, _ := email.NewEmailAddress("sender@example.com")
 	to, _ := email.NewEmailAddress("recipient@example.com")
-	e := email.Email{From: from, To: []email.EmailAddress{to}, HTML: "<p>hello</p>"}
+	e := email.Email{From: from, To: []email.Address{to}, HTML: "<p>hello</p>"}
 	assert.NoError(t, e.Validate())
 }
 
@@ -41,12 +41,12 @@ func TestEmail_Validate_missingTo(t *testing.T) {
 func TestEmail_Validate_missingBody(t *testing.T) {
 	from, _ := email.NewEmailAddress("sender@example.com")
 	to, _ := email.NewEmailAddress("r@example.com")
-	e := email.Email{From: from, To: []email.EmailAddress{to}}
+	e := email.Email{From: from, To: []email.Address{to}}
 	assert.Error(t, e.Validate())
 }
 
 func TestEmail_Validate_missingFrom(t *testing.T) {
 	to, _ := email.NewEmailAddress("r@example.com")
-	e := email.Email{To: []email.EmailAddress{to}, Text: "hello"}
+	e := email.Email{To: []email.Address{to}, Text: "hello"}
 	assert.Error(t, e.Validate())
 }

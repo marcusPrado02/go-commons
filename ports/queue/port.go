@@ -16,8 +16,8 @@ type Message struct {
 // Handler processes a received message. Return an error to trigger redelivery.
 type Handler func(ctx context.Context, msg Message) error
 
-// QueuePort supports publishing and subscribing to topics.
-type QueuePort interface {
+// Port supports publishing and subscribing to topics.
+type Port interface {
 	// Publish sends a message to the given topic.
 	Publish(ctx context.Context, topic string, msg Message) error
 	// Subscribe registers a handler for messages on the given topic.

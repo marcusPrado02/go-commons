@@ -10,7 +10,7 @@ import (
 )
 
 // compile-time interface check
-var _ push.PushPort = (*fcm.Client)(nil)
+var _ push.Port = (*fcm.Client)(nil)
 
 // skipIfNoCreds skips the test if FCM_CREDENTIALS_FILE is not set.
 func skipIfNoCreds(t *testing.T) string {
@@ -46,7 +46,7 @@ func TestFCM_Send_MissingTokenAndTopic(t *testing.T) {
 		t.Fatalf("New: %v", err)
 	}
 
-	_, err = client.Send(context.Background(), push.PushNotification{
+	_, err = client.Send(context.Background(), push.Notification{
 		Title: "Hello",
 		// Token and Topic are both empty.
 	})
