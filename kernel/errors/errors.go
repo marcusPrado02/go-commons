@@ -94,6 +94,8 @@ func (p Problem) WithDetail(key string, value any) Problem {
 }
 
 // WithDetails returns a new Problem with the given map merged into Details.
+//
+//nolint:gocritic // hugeParam: value receiver intentional — see Error().
 func (p Problem) WithDetails(extra map[string]any) Problem {
 	merged := make(map[string]any, len(p.Details)+len(extra))
 	for k, v := range p.Details {
@@ -107,6 +109,8 @@ func (p Problem) WithDetails(extra map[string]any) Problem {
 }
 
 // WithCause returns a new Problem with the given cause attached.
+//
+//nolint:gocritic // hugeParam: value receiver intentional — see Error().
 func (p Problem) WithCause(err error) Problem {
 	p.Cause = err
 	return p
