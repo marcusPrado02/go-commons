@@ -39,6 +39,8 @@ jobs:
         with:
           version: latest
           args: ./...
+        env:
+          GOWORK: off
 
   tidy-check:
     name: Tidy Check

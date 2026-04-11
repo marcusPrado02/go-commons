@@ -1,6 +1,6 @@
 module github.com/marcusPrado02/go-commons/adapters/persistence/inmemory
 
-go 1.23
+go 1.24
 
 require (
 	github.com/marcusPrado02/go-commons v0.0.0

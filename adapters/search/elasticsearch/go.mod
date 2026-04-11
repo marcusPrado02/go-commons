@@ -1,6 +1,6 @@
 module github.com/marcusPrado02/go-commons/adapters/search/elasticsearch
 
-go 1.23
+go 1.24
 
 replace github.com/marcusPrado02/go-commons => ../../..
 

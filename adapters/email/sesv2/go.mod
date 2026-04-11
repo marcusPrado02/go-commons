@@ -1,6 +1,6 @@
 module github.com/marcusPrado02/go-commons/adapters/email/sesv2
 
-go 1.23
+go 1.24
 
 replace github.com/marcusPrado02/go-commons => ../../..
 
