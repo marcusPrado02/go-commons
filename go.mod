@@ -1,6 +1,6 @@
 module github.com/marcusPrado02/go-commons
 
-go 1.25
+go 1.24
 
 require (
 	github.com/robfig/cron/v3 v3.0.1
