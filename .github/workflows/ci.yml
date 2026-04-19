@@ -55,7 +55,7 @@ jobs:
           go-version-file: go.mod
           cache: true
 
-      - name: Coverage gate (>=70%)
+      - name: Coverage gate (>=75%)
         run: make coverage-report
 
   vulncheck:

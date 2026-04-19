@@ -14,12 +14,12 @@ coverage:
 	go tool cover -html=coverage.out -o coverage.html
 	@go tool cover -func=coverage.out | grep total
 
-# TOOL-08: Fail if total coverage of root module is below 70%.
+# TOOL-08: Fail if total coverage of root module is below 75%.
 coverage-report:
 	go test ./... -coverprofile=coverage.out
 	go tool cover -html=coverage.out -o coverage.html
 	@echo "Coverage report written to coverage.html"
-	@go tool cover -func=coverage.out | grep total | awk '{pct=$$3; sub(/%/,"",pct); if(pct+0 < 70) {print "ERROR: coverage "pct"% is below 70% threshold"; exit 1} else {print "OK: coverage "pct"%"}}'
+	@go tool cover -func=coverage.out | grep total | awk '{pct=$$3; sub(/%/,"",pct); if(pct+0 < 75) {print "ERROR: coverage "pct"% is below 75% threshold"; exit 1} else {print "OK: coverage "pct"%"}}'
 
 tidy:
 	go mod tidy
