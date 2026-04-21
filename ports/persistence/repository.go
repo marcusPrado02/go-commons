@@ -62,11 +62,16 @@ type PageRequest struct {
 	Size int
 }
 
+const maxPageSize = 10_000
+
 // Validate returns an error if the PageRequest is invalid.
 // Repositories should call this at the start of FindAll and Search.
 func (p PageRequest) Validate() error {
 	if p.Size <= 0 {
 		return fmt.Errorf("persistence: PageRequest.Size must be > 0, got %d", p.Size)
+	}
+	if p.Size > maxPageSize {
+		return fmt.Errorf("persistence: PageRequest.Size must be <= %d, got %d", maxPageSize, p.Size)
 	}
 	if p.Page < 0 {
 		return fmt.Errorf("persistence: PageRequest.Page must be >= 0, got %d", p.Page)
