@@ -47,24 +47,40 @@ func (r Result[T]) IsOk() bool { return r.problem == nil }
 // IsFail returns true if the Result holds a Problem.
 func (r Result[T]) IsFail() bool { return r.problem != nil }
 
-// Value returns the held value. Panics if IsFail() — only call when IsOk() is guaranteed.
-func (r Result[T]) Value() T {
+// Must returns the held value. Panics if IsFail().
+// The Must prefix follows Go convention (regexp.MustCompile, template.Must) to signal
+// that this method panics — making the risk visible at the call site.
+// Prefer Or, OrElse, or Unwrap for safe extraction.
+func (r Result[T]) Must() T {
 	if r.IsFail() {
-		panic("result: called Value() on a failed Result — check IsOk() first")
+		panic("result: called Must() on a failed Result — check IsOk() first")
 	}
 	return r.value
 }
 
+// Value returns the held value. Panics if IsFail().
+//
+// Deprecated: Use Must() instead. Must() is identical but follows the Go convention
+// of using "Must" to signal a panicking method (regexp.MustCompile, template.Must).
+func (r Result[T]) Value() T { return r.Must() }
+
 // ValueOrZero returns the held value, or the zero value of T if IsFail().
 func (r Result[T]) ValueOrZero() T { return r.value }
 
-// Problem returns the held Problem. Panics if IsOk() — only call when IsFail() is guaranteed.
-func (r Result[T]) Problem() kerrors.Problem {
+// MustProblem returns the held Problem. Panics if IsOk().
+// The Must prefix signals that this method panics — prefer checking IsFail() first.
+func (r Result[T]) MustProblem() kerrors.Problem {
 	if r.IsOk() {
-		panic("result: called Problem() on a successful Result — check IsFail() first")
+		panic("result: called MustProblem() on a successful Result — check IsFail() first")
 	}
 	return *r.problem
 }
+
+// Problem returns the held Problem. Panics if IsOk().
+//
+// Deprecated: Use MustProblem() instead. MustProblem() is identical but follows the Go
+// convention of using "Must" to signal a panicking method.
+func (r Result[T]) Problem() kerrors.Problem { return r.MustProblem() }
 
 // Unwrap returns (value, nil) on success or (zero, problem) on failure.
 // Use this when integrating with code that expects idiomatic (T, error).
@@ -97,7 +113,7 @@ func (r Result[T]) OrElse(f func() T) T {
 // If r is failed, the failure propagates unchanged.
 func Map[T, U any](r Result[T], f func(T) U) Result[U] {
 	if r.IsFail() {
-		return Fail[U](r.Problem())
+		return Fail[U](r.MustProblem())
 	}
 	return Ok(f(r.value))
 }
@@ -106,7 +122,7 @@ func Map[T, U any](r Result[T], f func(T) U) Result[U] {
 // If r is failed, the failure propagates unchanged and f is never called.
 func FlatMap[T, U any](r Result[T], f func(T) Result[U]) Result[U] {
 	if r.IsFail() {
-		return Fail[U](r.Problem())
+		return Fail[U](r.MustProblem())
 	}
 	return f(r.value)
 }

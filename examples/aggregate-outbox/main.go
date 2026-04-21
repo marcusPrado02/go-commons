@@ -156,7 +156,7 @@ func main() {
 	// 5. Show Result[T] error path.
 	badResult := Place("ord-002", -1)
 	if badResult.IsFail() {
-		fmt.Printf("\nBad order error: %v\n", badResult.Problem())
+		fmt.Printf("\nBad order error: %v\n", badResult.MustProblem())
 	}
 
 	stopCtx, cancel := context.WithTimeout(ctx, time.Second)

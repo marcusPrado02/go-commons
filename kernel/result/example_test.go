@@ -9,7 +9,7 @@ import (
 
 func ExampleOk() {
 	r := result.Ok(42)
-	fmt.Println(r.IsOk(), r.Value())
+	fmt.Println(r.IsOk(), r.Must())
 	// Output:
 	// true 42
 }
@@ -35,7 +35,7 @@ func ExampleResult_Or() {
 func ExampleMap() {
 	r := result.Ok(5)
 	doubled := result.Map(r, func(n int) int { return n * 2 })
-	fmt.Println(doubled.Value())
+	fmt.Println(doubled.Must())
 	// Output:
 	// 10
 }
@@ -49,7 +49,7 @@ func ExampleFlatMap() {
 	}
 
 	r := result.FlatMap(result.Ok("hello"), parse)
-	fmt.Println(r.Value())
+	fmt.Println(r.Must())
 	// Output:
 	// 5
 }

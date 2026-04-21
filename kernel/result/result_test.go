@@ -15,7 +15,7 @@ func TestOk_IsOk(t *testing.T) {
 	r := result.Ok(42)
 	assert.True(t, r.IsOk())
 	assert.False(t, r.IsFail())
-	assert.Equal(t, 42, r.Value())
+	assert.Equal(t, 42, r.Must())
 }
 
 func TestFail_IsFail(t *testing.T) {
@@ -23,18 +23,30 @@ func TestFail_IsFail(t *testing.T) {
 	r := result.Fail[int](p)
 	assert.True(t, r.IsFail())
 	assert.False(t, r.IsOk())
-	assert.Equal(t, p, r.Problem())
+	assert.Equal(t, p, r.MustProblem())
 }
 
-func TestValue_PanicsOnFail(t *testing.T) {
+func TestMust_PanicsOnFail(t *testing.T) {
 	p := kerrors.ErrNotFound
 	r := result.Fail[string](p)
-	assert.Panics(t, func() { r.Value() })
+	assert.Panics(t, func() { r.Must() })
 }
 
-func TestProblem_PanicsOnOk(t *testing.T) {
+func TestMustProblem_PanicsOnOk(t *testing.T) {
 	r := result.Ok("hello")
-	assert.Panics(t, func() { r.Problem() })
+	assert.Panics(t, func() { r.MustProblem() })
+}
+
+// Backward-compatibility: deprecated Value() and Problem() still delegate correctly.
+func TestValue_BackwardCompat(t *testing.T) {
+	assert.Equal(t, 42, result.Ok(42).Value())
+	assert.Panics(t, func() { result.Fail[int](kerrors.ErrNotFound).Value() })
+}
+
+func TestProblem_BackwardCompat(t *testing.T) {
+	p := kerrors.ErrNotFound
+	assert.Equal(t, p, result.Fail[int](p).Problem())
+	assert.Panics(t, func() { result.Ok(0).Problem() })
 }
 
 func TestValueOrZero_ReturnsZeroOnFail(t *testing.T) {
@@ -59,27 +71,27 @@ func TestUnwrap_Failure(t *testing.T) {
 func TestFromError_WithNilError(t *testing.T) {
 	r := result.FromError("hello", nil)
 	assert.True(t, r.IsOk())
-	assert.Equal(t, "hello", r.Value())
+	assert.Equal(t, "hello", r.Must())
 }
 
 func TestFromError_WithError(t *testing.T) {
 	r := result.FromError("", errors.New("something went wrong"))
 	assert.True(t, r.IsFail())
-	assert.Equal(t, kerrors.CategoryTechnical, r.Problem().Category)
+	assert.Equal(t, kerrors.CategoryTechnical, r.MustProblem().Category)
 }
 
 func TestFromError_WithProblem(t *testing.T) {
 	p := kerrors.ErrNotFound
 	r := result.FromError("", p)
 	assert.True(t, r.IsFail())
-	assert.Equal(t, kerrors.CategoryNotFound, r.Problem().Category)
+	assert.Equal(t, kerrors.CategoryNotFound, r.MustProblem().Category)
 }
 
 func TestMap_TransformsValue(t *testing.T) {
 	r := result.Ok(2)
 	doubled := result.Map(r, func(n int) string { return fmt.Sprintf("%dx", n) })
 	assert.True(t, doubled.IsOk())
-	assert.Equal(t, "2x", doubled.Value())
+	assert.Equal(t, "2x", doubled.Must())
 }
 
 func TestMap_PropagatesFail(t *testing.T) {
@@ -97,12 +109,12 @@ func TestFlatMap_ChainsSuccess(t *testing.T) {
 		return result.Fail[string](kerrors.ErrValidation)
 	})
 	assert.True(t, chained.IsOk())
-	assert.Equal(t, "big", chained.Value())
+	assert.Equal(t, "big", chained.Must())
 }
 
 func TestFlatMap_PropagatesFail(t *testing.T) {
 	r := result.Fail[int](kerrors.ErrUnauthorized)
 	chained := result.FlatMap(r, func(n int) result.Result[string] { return result.Ok("x") })
 	assert.True(t, chained.IsFail())
-	assert.Equal(t, kerrors.CategoryUnauthorized, chained.Problem().Category)
+	assert.Equal(t, kerrors.CategoryUnauthorized, chained.MustProblem().Category)
 }
